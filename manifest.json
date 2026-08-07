@@ -1,0 +1,21 @@
+[
+  {
+    "guid": "c24c5b8e-2fa8-47f6-a671-a7eb9d60c114",
+    "name": "Community",
+    "description": "Foro comunitario local integrado con usuarios y bibliotecas de Jellyfin.",
+    "overview": "Debates, mensajes, encuestas, notificaciones y moderación dentro de Jellyfin.",
+    "owner": "odoslf",
+    "category": "General",
+    "versions": [
+      {
+        "version": "1.0.0.0",
+        "changelog": "Versión 1.0 para Jellyfin 10.10.7 y .NET 8.",
+        "targetAbi": "10.10.7.0",
+        "sourceUrl": "https://raw.githubusercontent.com/odoslf/Jellyfin-Community/release-1.0.0.0/dist/Jellyfin.Plugin.Community_1.0.0.0_Jellyfin-10.10.7_net8.zip",
+        "checksum": "5FB4D028DDA83927303AA1F894886BE6",
+        "timestamp": "2026-08-07T19:08:51.361594Z",
+        "dependencies": []
+      }
+    ]
+  }
+]

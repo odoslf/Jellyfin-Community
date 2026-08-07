@@ -1,0 +1,30 @@
+root = true
+
+[*.cs]
+# These methods intentionally remain instance members because they are part of
+# injectable service contracts and may acquire policy dependencies later.
+dotnet_diagnostic.CA1822.severity = none
+
+[CommunityExceptionFilter.cs]
+# This is an exceptional error path, not a hot logging loop.
+dotnet_diagnostic.CA1848.severity = none
+
+[CommunityStartupService.cs]
+# Startup and failed-restore messages execute at most once per server start.
+dotnet_diagnostic.CA1848.severity = none
+
+[CommunityIntegrityTask.cs]
+# Integrity logging occurs only in the scheduled maintenance task.
+dotnet_diagnostic.CA1848.severity = none
+
+[CommunityDatabase.cs]
+# The service is a process-lifetime singleton; the semaphore is released with
+# the DI container/process and owns no unmanaged resource.
+dotnet_diagnostic.CA1001.severity = none
+# FTS fallback logging occurs only during schema initialization.
+dotnet_diagnostic.CA1848.severity = none
+
+[BackupService.cs]
+# The service is a process-lifetime singleton; its semaphore owns no unmanaged
+# resource and is intentionally retained for the service lifetime.
+dotnet_diagnostic.CA1001.severity = none
