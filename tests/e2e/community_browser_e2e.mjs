@@ -3,11 +3,16 @@ import { chromium } from 'playwright';
 const base = (process.env.JELLYFIN_URL || 'http://127.0.0.1:8096').replace(/\/$/, '');
 const user = { name: 'community-user', password: 'community-user-password' };
 const admin = { name: 'community-admin', password: 'community-admin-password' };
+const KNOWN_JELLYFIN_SCROLL_ERROR = "Failed to execute 'scrollTo' on 'Element': Failed to read the 'behavior' property from 'ScrollOptions': The provided value 'null' is not a valid enum value of type ScrollBehavior.";
 
 function attachDiagnostics(page, label) {
     const pageErrors = [];
     const communityConsoleErrors = [];
     page.on('pageerror', error => {
+        if (error.message === KNOWN_JELLYFIN_SCROLL_ERROR) {
+            console.log(`${label}: ignored known Jellyfin 10.10.7 scrollTo(null) browser error`);
+            return;
+        }
         const value = `${label}: ${error.message}`;
         pageErrors.push(value);
         console.error(value);
