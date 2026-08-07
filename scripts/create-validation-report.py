@@ -72,6 +72,8 @@ def main() -> int:
     api_e2e_path = artifacts / "runtime-api-e2e.json"
     browser_e2e_path = artifacts / "runtime-browser-e2e.txt"
     runtime_log_path = artifacts / "jellyfin-10.10.7-runtime.log"
+    user_screenshot = artifacts / "e2e-user-mobile.png"
+    admin_screenshot = artifacts / "e2e-admin-mobile.png"
 
     if not package.is_file() or not audit.is_file():
         raise RuntimeError("Package or vulnerability audit is missing")
@@ -89,8 +91,21 @@ def main() -> int:
 
     api_e2e = read_json_evidence(api_e2e_path, "Jellyfin API E2E")
     browser_e2e = read_json_evidence(browser_e2e_path, "Jellyfin Web browser E2E")
-    if not all(browser_e2e.get(key) is True for key in ("ordinaryUser", "administrator", "menu", "createThread", "adminPanel")):
+    required_browser_flags = (
+        "ordinaryUser",
+        "administrator",
+        "menu",
+        "createThread",
+        "adminPanel",
+        "mobileViewport",
+    )
+    if not all(browser_e2e.get(key) is True for key in required_browser_flags):
         raise RuntimeError(f"Browser E2E evidence is incomplete: {browser_e2e}")
+    if browser_e2e.get("horizontalOverflow") is not False:
+        raise RuntimeError(f"Mobile browser E2E detected horizontal overflow: {browser_e2e}")
+    for screenshot in (user_screenshot, admin_screenshot):
+        if not screenshot.is_file() or screenshot.stat().st_size == 0:
+            raise RuntimeError(f"Mobile browser screenshot is missing: {screenshot}")
 
     if not runtime_log_path.is_file() or runtime_log_path.stat().st_size == 0:
         raise RuntimeError("Jellyfin runtime log is missing")
@@ -138,6 +153,8 @@ def main() -> int:
 - Creación de conversación desde la interfaz: **verificada en navegador**
 - Pestañas y panel de administración para administrador: **verificados en navegador**
 - Ocultación de administración/moderación para usuario normal: **verificada en navegador**
+- Layout móvil 390×844 y 430×932: **verificado sin desbordamiento horizontal**
+- Capturas de evidencia de usuario y administrador: **generadas**
 
 ## Paquete instalable
 
@@ -151,7 +168,7 @@ El paquete no incorpora ensamblados `Jellyfin.*` del servidor, `MediaBrowser.*`,
 
 La prueba API configura desde cero una instancia oficial de Jellyfin 10.10.7, autentica un administrador y un usuario normal, comprueba recursos web, categorías iniciales, creación y búsqueda de temas, reacciones, seguimiento, respuestas, denuncias y resolución por moderación, separación de permisos administrativos y diagnóstico de integración web.
 
-La prueba de navegador inicia sesión mediante la interfaz real de Jellyfin Web, abre `Comunidad` desde el menú insertado por el plugin, comprueba que el usuario normal puede utilizar el foro y crear un tema, y comprueba en otra sesión que el administrador dispone de Moderación y Administración y puede ver usuarios conocidos y el estado de integración web.
+La prueba de navegador inicia sesión mediante la interfaz real de Jellyfin Web con viewports de móvil, abre `Comunidad` desde el menú insertado por el plugin, comprueba que el usuario normal puede utilizar el foro y crear un tema, y comprueba en otra sesión que el administrador dispone de Moderación y Administración y puede ver usuarios conocidos y el estado de integración web.
 
 ## Alcance de la garantía
 
