@@ -120,6 +120,8 @@ jobs:
           set -euo pipefail
           node tests/e2e/community_browser_e2e.mjs | tee artifacts/runtime-browser-e2e.txt
           test -s artifacts/runtime-browser-e2e.txt
+          test -s artifacts/e2e-user-mobile.png
+          test -s artifacts/e2e-admin-mobile.png
 
       - name: Capture Jellyfin runtime logs
         if: always()
@@ -174,6 +176,8 @@ jobs:
             artifacts/VALIDATION-REPORT.md
             artifacts/runtime-api-e2e.json
             artifacts/runtime-browser-e2e.txt
+            artifacts/e2e-user-mobile.png
+            artifacts/e2e-admin-mobile.png
             artifacts/jellyfin-10.10.7-runtime.log
             artifacts/jellyfin-container-inspect.json
             vulnerability-audit.txt
