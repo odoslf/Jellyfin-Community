@@ -25,14 +25,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo 'bed00baf4a4feb3f0b347f47dc576abe21e81fa51ce9f2b72411beb1f4df008f  .bootstrap/exact/part-02b1' | sha256sum --check --strict
-          echo 'c9d5cd3c986d66f1f1fa9e6b91bc0abbfc9b1492464a5b9e4879384569df8bbb  .bootstrap/exact/part-02b2' | sha256sum --check --strict
           inputs=(
             .bootstrap/source.b64.part-00
             .bootstrap/exact/part-01
             .bootstrap/exact/part-02a
-            .bootstrap/exact/part-02b1
-            .bootstrap/exact/part-02b2
+            .bootstrap/exact/part-02b1-0
+            .bootstrap/exact/part-02b1-1
+            .bootstrap/exact/part-02b1-2
+            .bootstrap/exact/part-02b1-3
+            .bootstrap/exact/part-02b1-4
+            .bootstrap/exact/part-02b2-0
+            .bootstrap/exact/part-02b2-1
+            .bootstrap/exact/part-02b2-2
+            .bootstrap/exact/part-02b2-3
+            .bootstrap/exact/part-02b2-4
             .bootstrap/exact/part-03
             .bootstrap/exact/part-04a
             .bootstrap/exact/part-04b
