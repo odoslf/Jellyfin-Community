@@ -61,6 +61,42 @@ public sealed partial class CommunityService
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<IReadOnlyList<CommunityKnownUserDto>> GetKnownUsersAsync(CommunityUserContext user, CancellationToken cancellationToken)
+    {
+        _permissions.EnsureAdministrator(user);
+        await using var connection = await _database.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT u.user_id, u.username, u.first_seen_utc, u.last_seen_utc,
+                   CASE WHEN r.user_id IS NULL THEN 0 ELSE 1 END, r.category_id,
+                   COALESCE(s.is_muted, 0), s.muted_until_utc,
+                   COALESCE(s.is_suspended, 0), s.suspended_until_utc
+            FROM known_users u
+            LEFT JOIN forum_roles r ON r.user_id = u.user_id AND r.role = 'moderator'
+            LEFT JOIN user_forum_status s ON s.user_id = u.user_id
+            WHERE u.is_deleted = 0
+            ORDER BY u.username COLLATE NOCASE;
+            """;
+        var users = new List<CommunityKnownUserDto>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            users.Add(new CommunityKnownUserDto(
+                Guid.Parse(reader.GetString(0)),
+                reader.GetString(1),
+                ParseDate(reader.GetString(2)),
+                ParseDate(reader.GetString(3)),
+                reader.GetInt64(4) != 0,
+                reader.IsDBNull(5) ? null : reader.GetInt64(5),
+                reader.GetInt64(6) != 0,
+                reader.IsDBNull(7) ? null : ParseDate(reader.GetString(7)),
+                reader.GetInt64(8) != 0,
+                reader.IsDBNull(9) ? null : ParseDate(reader.GetString(9))));
+        }
+
+        return users;
+    }
+
     public async Task<StorageStatsDto> GetStatsAsync(CommunityUserContext user, CancellationToken cancellationToken)
     {
         _permissions.EnsureAdministrator(user);
