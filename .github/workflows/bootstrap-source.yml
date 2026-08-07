@@ -28,12 +28,15 @@ jobs:
           cat \
             .bootstrap/source.b64.part-00 \
             .bootstrap/exact/part-01 \
-            .bootstrap/exact/part-02 \
+            .bootstrap/exact/part-02a \
+            .bootstrap/exact/part-02b \
             .bootstrap/exact/part-03 \
-            .bootstrap/exact/part-04 \
+            .bootstrap/exact/part-04a \
+            .bootstrap/exact/part-04b \
             .bootstrap/exact/part-05 \
             .bootstrap/exact/part-06 \
-            .bootstrap/exact/part-07 \
+            .bootstrap/exact/part-07a \
+            .bootstrap/exact/part-07b \
             .bootstrap/exact/part-08a \
             .bootstrap/exact/part-08b \
             .bootstrap/exact/part-09 \
