@@ -29,7 +29,7 @@
 
     function installCommunityAjaxAdapter() {
         if (!window.ApiClient || ApiClient.__communityAjaxAdapterInstalled) {
-            return;
+            return Boolean(window.ApiClient?.__communityAjaxAdapterInstalled);
         }
 
         const originalAjax = ApiClient.ajax.bind(ApiClient);
@@ -94,6 +94,7 @@
             configurable: false,
             writable: false
         });
+        return true;
     }
 
     function getConfigurationResourceUrl(name) {
@@ -119,7 +120,6 @@
             return;
         }
 
-        communityPage.dispatchEvent(new CustomEvent('viewdestroy', { bubbles: true }));
         communityPage.remove();
         communityPage = null;
 
@@ -140,10 +140,13 @@
             event.stopPropagation();
         }
 
+        if (!installCommunityAjaxAdapter()) {
+            throw new Error('La API de Jellyfin todavía no está disponible. Inténtelo de nuevo en unos segundos.');
+        }
+
         if (communityPage?.isConnected) {
             closeDrawerIfOpen();
             communityPage.classList.remove('hide');
-            communityPage.dispatchEvent(new CustomEvent('viewshow', { bubbles: true }));
             updateSelectedState(communityPage);
             return;
         }
@@ -204,6 +207,7 @@
             communityPage = page;
             document.documentElement.classList.add('jellyfinCommunityOpen');
 
+            page.querySelector('#communityClose')?.addEventListener('click', closeCommunity);
             page.addEventListener('click', clickEvent => {
                 const anchor = clickEvent.target.closest?.('a[href^="#!"],a[href^="#/"]');
                 if (anchor) {
@@ -212,8 +216,6 @@
             }, { capture: true });
 
             new Controller(page, {});
-            page.dispatchEvent(new CustomEvent('viewshow', { bubbles: true }));
-            page.dispatchEvent(new CustomEvent('pageshow', { bubbles: true }));
             updateSelectedState(page);
         })().catch(error => {
             closeCommunity();
@@ -285,14 +287,20 @@
         const observer = new MutationObserver(scheduleEnsureMenuLinks);
         observer.observe(document.documentElement, { childList: true, subtree: true });
 
-        document.addEventListener('viewshow', event => {
-            if (communityPage && event.target !== communityPage && !communityPage.contains(event.target)) {
-                closeCommunity();
+        document.addEventListener('click', event => {
+            if (!communityPage) {
                 return;
             }
-            updateSelectedState(event.target);
-        });
-        document.addEventListener('pageshow', event => updateSelectedState(event.target));
+            const target = event.target;
+            if (!(target instanceof Element)) {
+                return;
+            }
+            const menuLink = target.closest('.navMenuOption');
+            if (menuLink && !menuLink.hasAttribute(MENU_ATTRIBUTE)) {
+                closeCommunity();
+            }
+        }, { capture: true });
+
         window.addEventListener('popstate', closeCommunity);
         window.addEventListener('hashchange', closeCommunity);
 
