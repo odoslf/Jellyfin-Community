@@ -5,7 +5,7 @@ using Microsoft.Net.Http.Headers;
 
 namespace Jellyfin.Plugin.Community.WebIntegration;
 
-public sealed class CommunityWebInjectionMiddleware
+public sealed partial class CommunityWebInjectionMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly CommunityWebIntegrationState _state;
@@ -60,7 +60,7 @@ public sealed class CommunityWebInjectionMiddleware
             context.Response.Headers.Remove(HeaderNames.ContentEncoding);
             await originalBody.WriteAsync(payload, context.RequestAborted).ConfigureAwait(false);
 
-            if (!string.Equals(transformed, html, StringComparison.Ordinal))
+            if (!ReferenceEquals(transformed, html) && !string.Equals(transformed, html, StringComparison.Ordinal))
             {
                 _state.RecordTransformed();
             }
@@ -68,7 +68,7 @@ public sealed class CommunityWebInjectionMiddleware
         catch (Exception exception) when (exception is not OperationCanceledException || !context.RequestAborted.IsCancellationRequested)
         {
             _state.RecordError(exception);
-            _logger.LogError(exception, "Community failed to inject its Jellyfin Web bootstrap script.");
+            LogInjectionFailure(_logger, exception);
             context.Response.Body = originalBody;
 
             if (buffer.CanSeek)
@@ -83,6 +83,9 @@ public sealed class CommunityWebInjectionMiddleware
             context.Response.Body = originalBody;
         }
     }
+
+    [LoggerMessage(EventId = 1101, Level = LogLevel.Error, Message = "Community failed to inject its Jellyfin Web bootstrap script.")]
+    private static partial void LogInjectionFailure(ILogger logger, Exception exception);
 
     private static bool ShouldInspect(PathString path)
     {
