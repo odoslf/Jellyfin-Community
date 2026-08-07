@@ -9,7 +9,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 PLUGIN_GUID = "c24c5b8e-2fa8-47f6-a671-a7eb9d60c114"
-PLUGIN_VERSION = "1.0.0.0"
+PLUGIN_VERSION = "1.1.0.0"
 TARGET_ABI = "10.10.7.0"
 
 
@@ -40,7 +40,7 @@ def main() -> int:
             "versions": [
                 {
                     "version": PLUGIN_VERSION,
-                    "changelog": "Versión 1.0 para Jellyfin 10.10.7 y .NET 8.",
+                    "changelog": "Community 1.1 corrige la integración con Jellyfin Web 10.10.7, añade acceso desde el menú para usuarios, panel administrativo funcional y validación E2E real.",
                     "targetAbi": TARGET_ABI,
                     "sourceUrl": args.source_url,
                     "checksum": checksum,
