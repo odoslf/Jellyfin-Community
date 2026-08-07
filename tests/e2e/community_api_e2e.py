@@ -66,6 +66,12 @@ def authenticate(username: str, password: str) -> str:
 
 def main() -> int:
     wait_for_server()
+
+    # Jellyfin's own 10.10.7 integration tests call Startup/User before updating
+    # the first account because the GET initializes the user manager/database.
+    initial_user = call("GET", "/Startup/User", expected=(200,))
+    assert initial_user.get("Name") or initial_user.get("name"), initial_user
+
     call("POST", "/Startup/Configuration", {
         "UICulture": "es-ES",
         "MetadataCountryCode": "ES",
@@ -139,6 +145,10 @@ def main() -> int:
     first = next(post for post in posts["items"] if post["id"] == first_post_id)
     assert first["reactions"].get("like") == 1
 
+    call("POST", f"/Community/api/v1/threads/{thread_id}/follow", token=user_token, expected=(204,))
+    followed = call("GET", "/Community/api/v1/threads?followedOnly=true&page=1&pageSize=25", token=user_token, expected=(200,))
+    assert any(item["id"] == thread_id for item in followed["items"])
+
     time.sleep(11)
     reply = call("POST", f"/Community/api/v1/threads/{thread_id}/posts", {
         "body": "Respuesta E2E del usuario normal.",
@@ -149,9 +159,26 @@ def main() -> int:
     }, token=user_token, expected=(201,))
     assert reply["threadId"] == thread_id
 
+    search = call("GET", "/Community/api/v1/threads?q=Community%20E2E&page=1&pageSize=25", token=user_token, expected=(200,))
+    assert any(item["id"] == thread_id for item in search["items"])
+
+    call("POST", f"/Community/api/v1/posts/{first_post_id}/report", {
+        "reason": "Prueba E2E",
+        "comment": "Comprobar cola de moderación",
+    }, token=user_token, expected=(201,))
+    reports = call("GET", "/Community/api/v1/moderation/reports?state=0&page=1&pageSize=25", token=admin_token, expected=(200,))
+    report = next(item for item in reports["items"] if item["postId"] == first_post_id)
+    call("POST", f"/Community/api/v1/moderation/reports/{report['id']}/resolve", {
+        "state": 2,
+        "resolution": "Validado por E2E",
+    }, token=admin_token, expected=(204,))
+
     call("GET", "/Community/api/v1/admin/stats", token=user_token, expected=(403,))
     stats = call("GET", "/Community/api/v1/admin/stats", token=admin_token, expected=(200,))
     assert stats["threads"] >= 1 and stats["posts"] >= 2
+
+    known_users = call("GET", "/Community/api/v1/admin/users", token=admin_token, expected=(200,))
+    assert any(item["username"] == USER_NAME for item in known_users)
 
     integration = call("GET", "/Community/api/v1/admin/web-integration", token=admin_token, expected=(200,))
     assert integration["indexRequestsSeen"] >= 1, integration
@@ -159,12 +186,16 @@ def main() -> int:
     assert not integration.get("lastError"), integration
 
     print(json.dumps({
-        "adminToken": admin_token,
-        "userToken": user_token,
+        "status": "passed",
         "threadId": thread_id,
         "firstPostId": first_post_id,
-        "integration": integration,
-    }))
+        "categories": len(categories),
+        "webIntegration": {
+            "indexRequestsSeen": integration["indexRequestsSeen"],
+            "indexResponsesTransformed": integration["indexResponsesTransformed"],
+            "lastError": integration.get("lastError"),
+        },
+    }, ensure_ascii=False))
     return 0
 
 
