@@ -100,7 +100,11 @@ jobs:
             jellyfin/jellyfin:10.10.7
 
       - name: Real Jellyfin API integration test
-        run: python3 tests/e2e/community_api_e2e.py | tee artifacts/runtime-api-e2e.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tests/e2e/community_api_e2e.py | tee artifacts/runtime-api-e2e.json
+          test -s artifacts/runtime-api-e2e.json
 
       - name: Install Playwright Chromium
         shell: bash
@@ -110,15 +114,34 @@ jobs:
           npx playwright install --with-deps chromium
 
       - name: Real Jellyfin Web browser test
-        run: node tests/e2e/community_browser_e2e.mjs | tee artifacts/runtime-browser-e2e.txt
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/e2e/community_browser_e2e.mjs | tee artifacts/runtime-browser-e2e.txt
+          test -s artifacts/runtime-browser-e2e.txt
 
       - name: Capture Jellyfin runtime logs
         if: always()
         shell: bash
         run: |
+          set -u
           mkdir -p artifacts
           docker logs jellyfin-community-e2e > artifacts/jellyfin-10.10.7-runtime.log 2>&1 || true
           docker inspect jellyfin-community-e2e > artifacts/jellyfin-container-inspect.json 2>&1 || true
+
+      - name: Assert Community runtime log is clean
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -s artifacts/jellyfin-10.10.7-runtime.log ] && grep -E '\[ERR\].*Jellyfin\.Plugin\.Community|Jellyfin\.Plugin\.Community.*\[ERR\]' artifacts/jellyfin-10.10.7-runtime.log; then
+            echo 'Community emitted an error in the real Jellyfin 10.10.7 runtime log.' >&2
+            exit 1
+          fi
+          if [ -s artifacts/jellyfin-10.10.7-runtime.log ]; then
+            grep -q 'Loaded plugin: Community 1.1.0.0' artifacts/jellyfin-10.10.7-runtime.log
+            grep -q 'Jellyfin Community initialized' artifacts/jellyfin-10.10.7-runtime.log
+          fi
 
       - name: Stop runtime container
         if: always()
