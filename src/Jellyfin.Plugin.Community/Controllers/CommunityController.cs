@@ -1,5 +1,6 @@
 using Jellyfin.Plugin.Community.Domain;
 using Jellyfin.Plugin.Community.Services;
+using Jellyfin.Plugin.Community.WebIntegration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -17,19 +18,22 @@ public sealed class CommunityController : ControllerBase
     private readonly NotificationService _notifications;
     private readonly AttachmentService _attachments;
     private readonly PermissionService _permissions;
+    private readonly CommunityWebIntegrationState _webIntegration;
 
     public CommunityController(
         CurrentUserService currentUser,
         CommunityService community,
         NotificationService notifications,
         AttachmentService attachments,
-        PermissionService permissions)
+        PermissionService permissions,
+        CommunityWebIntegrationState webIntegration)
     {
         _currentUser = currentUser;
         _community = community;
         _notifications = notifications;
         _attachments = attachments;
         _permissions = permissions;
+        _webIntegration = webIntegration;
     }
 
     [HttpGet("me")]
@@ -250,9 +254,27 @@ public sealed class CommunityController : ControllerBase
         return NoContent();
     }
 
+    [HttpGet("admin/users")]
+    public async Task<ActionResult<IReadOnlyList<CommunityKnownUserDto>>> GetKnownUsers(CancellationToken cancellationToken)
+        => Ok(await _community.GetKnownUsersAsync(await UserAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false));
+
     [HttpGet("admin/stats")]
     public async Task<ActionResult<StorageStatsDto>> GetStats(CancellationToken cancellationToken)
         => Ok(await _community.GetStatsAsync(await UserAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false));
+
+    [HttpGet("admin/web-integration")]
+    public async Task<ActionResult<WebIntegrationStatusDto>> GetWebIntegration(CancellationToken cancellationToken)
+    {
+        var user = await UserAsync(cancellationToken).ConfigureAwait(false);
+        _permissions.EnsureAdministrator(user);
+        var version = typeof(Plugin).Assembly.GetName().Version?.ToString() ?? "1.1.0.0";
+        return Ok(new WebIntegrationStatusDto(
+            version,
+            _webIntegration.IndexRequestsSeen,
+            _webIntegration.IndexResponsesTransformed,
+            _webIntegration.LastInjectionUtc,
+            _webIntegration.LastError));
+    }
 
     [HttpGet("admin/audit")]
     public async Task<ActionResult<PagedResult<AuditEntryDto>>> GetAudit([FromQuery] int page = 1, [FromQuery] int pageSize = 25, CancellationToken cancellationToken = default)
