@@ -1,4 +1,4 @@
-name: Build and validate
+name: Build, validate and run Jellyfin 10.10.7 E2E
 
 on:
   push:
@@ -6,25 +6,52 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: community-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
     env:
       DOTNET_NOLOGO: 'true'
       DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
       NUGET_XMLDOC_MODE: skip
+      JELLYFIN_URL: http://127.0.0.1:8096
+      COMMUNITY_VERSION: 1.1.0.0
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.423
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate web source syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check src/Jellyfin.Plugin.Community/Web/communityBootstrap.js
+          cp src/Jellyfin.Plugin.Community/Web/communityPageController.js "$RUNNER_TEMP/communityPageController.mjs"
+          node --check "$RUNNER_TEMP/communityPageController.mjs"
+          python -m py_compile tests/e2e/community_api_e2e.py
+          node --check tests/e2e/community_browser_e2e.mjs
+          if grep -qi '<script' src/Jellyfin.Plugin.Community/Web/community.html; then
+            echo 'Community page must not contain inline scripts.' >&2
+            exit 1
+          fi
+          grep -q 'data-controller="CommunityPageController"' src/Jellyfin.Plugin.Community/Web/community.html
 
       - name: Restore
         run: dotnet restore Jellyfin.Plugin.Community.sln --force-evaluate
@@ -49,17 +76,67 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          rm -rf artifacts
           mkdir -p artifacts/publish
           dotnet publish src/Jellyfin.Plugin.Community/Jellyfin.Plugin.Community.csproj -c Release --no-restore -o artifacts/publish
-          python3 scripts/package.py --publish artifacts/publish --output artifacts/Jellyfin.Plugin.Community_1.0.0.0.zip
-          unzip -t artifacts/Jellyfin.Plugin.Community_1.0.0.0.zip
+          python3 scripts/package.py --publish artifacts/publish --output "artifacts/Jellyfin.Plugin.Community_${COMMUNITY_VERSION}.zip"
+          unzip -t "artifacts/Jellyfin.Plugin.Community_${COMMUNITY_VERSION}.zip"
+          test "$(unzip -Z1 "artifacts/Jellyfin.Plugin.Community_${COMMUNITY_VERSION}.zip" | wc -l)" -eq 2
+          unzip -Z1 "artifacts/Jellyfin.Plugin.Community_${COMMUNITY_VERSION}.zip" | sort | diff -u <(printf '%s\n' 'Jellyfin.Plugin.Community.dll' 'Markdig.dll' | sort) -
+
+      - name: Start official Jellyfin 10.10.7 with packaged plugin
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf e2e-runtime
+          mkdir -p "e2e-runtime/config/plugins/Community_${COMMUNITY_VERSION}" e2e-runtime/cache
+          unzip -q "artifacts/Jellyfin.Plugin.Community_${COMMUNITY_VERSION}.zip" -d "e2e-runtime/config/plugins/Community_${COMMUNITY_VERSION}"
+          chmod -R a+rwX e2e-runtime
+          docker pull jellyfin/jellyfin:10.10.7
+          docker run -d --name jellyfin-community-e2e \
+            -p 8096:8096 \
+            -v "$PWD/e2e-runtime/config:/config" \
+            -v "$PWD/e2e-runtime/cache:/cache" \
+            jellyfin/jellyfin:10.10.7
+
+      - name: Real Jellyfin API integration test
+        run: python3 tests/e2e/community_api_e2e.py | tee artifacts/runtime-api-e2e.json
+
+      - name: Install Playwright Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Real Jellyfin Web browser test
+        run: node tests/e2e/community_browser_e2e.mjs | tee artifacts/runtime-browser-e2e.txt
+
+      - name: Capture Jellyfin runtime logs
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          docker logs jellyfin-community-e2e > artifacts/jellyfin-10.10.7-runtime.log 2>&1 || true
+          docker inspect jellyfin-community-e2e > artifacts/jellyfin-container-inspect.json 2>&1 || true
+
+      - name: Stop runtime container
+        if: always()
+        run: docker rm -f jellyfin-community-e2e || true
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: Jellyfin.Plugin.Community-1.0.0.0-net8
+          name: Jellyfin.Plugin.Community-1.1.0.0-net8-validated
+          retention-days: 14
+          if-no-files-found: warn
           path: |
-            artifacts/Jellyfin.Plugin.Community_1.0.0.0.zip
-            artifacts/Jellyfin.Plugin.Community_1.0.0.0.zip.sha256
+            artifacts/Jellyfin.Plugin.Community_1.1.0.0.zip
+            artifacts/Jellyfin.Plugin.Community_1.1.0.0.zip.sha256
+            artifacts/runtime-api-e2e.json
+            artifacts/runtime-browser-e2e.txt
+            artifacts/jellyfin-10.10.7-runtime.log
+            artifacts/jellyfin-container-inspect.json
             vulnerability-audit.txt
             tests/**/TestResults/**/*.trx
             tests/**/TestResults/**/coverage.cobertura.xml
