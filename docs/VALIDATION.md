@@ -1,29 +1,32 @@
-# Validación de la versión 1.0.0.0
+# Validación de Community 1.1.0.0
 
-Esta versión está dirigida exclusivamente a Jellyfin Server 10.10.7 y .NET 8.
+Esta línea está dirigida específicamente a **Jellyfin Server 10.10.7 / .NET 8**.
 
-## Controles automatizados obligatorios
+La versión 1.1 cambia la validación de forma deliberada: una compilación correcta ya no es suficiente. El paquete que se vaya a publicar debe arrancar dentro de una instancia oficial de Jellyfin 10.10.7 y superar pruebas reales de API y navegador.
 
-El flujo de integración continua debe completar sin excepciones:
+## Puertas obligatorias de CI
 
-1. Reconstrucción reproducible del código fuente y comprobación SHA-256.
-2. Búsqueda de objetivos antiguos o incompatibles en código, proyectos, scripts y documentación.
-3. Restauración exacta de dependencias con el SDK .NET 8.0.423.
-4. Compilación Release de toda la solución con analizadores de .NET y advertencias tratadas como errores.
-5. Pruebas xUnit y generación de cobertura Cobertura.
-6. Auditoría de vulnerabilidades de todas las dependencias directas y transitivas.
-7. Publicación del plugin y empaquetado mediante una lista cerrada de archivos permitidos.
-8. Verificación de integridad del ZIP y generación de sumas SHA-256.
+La publicación se bloquea si falla cualquiera de estos controles:
 
-El artefacto de CI incluye `VALIDATION-REPORT.md`, los resultados TRX, la cobertura, el inventario del ZIP y la auditoría de dependencias. El paquete no debe distribuirse cuando cualquiera de estos pasos falle.
+1. Comprobación de sintaxis del bootstrap y del controlador JavaScript del frontend.
+2. Prohibición de JavaScript inline en `community.html`; la página debe usar el ciclo de controladores de Jellyfin Web.
+3. Restauración exacta con SDK .NET 8.0.423 y referencias Jellyfin 10.10.7.
+4. Compilación Release con analizadores de .NET y advertencias tratadas como errores.
+5. Pruebas xUnit y cobertura Cobertura.
+6. Auditoría NuGet de dependencias directas y transitivas.
+7. Empaquetado reproducible con lista cerrada: `Jellyfin.Plugin.Community.dll` y `Markdig.dll`.
+8. Integridad del ZIP y SHA-256.
+9. Arranque del **ZIP final** en `jellyfin/jellyfin:10.10.7`.
+10. E2E de API con un administrador y un usuario normal.
+11. Verificación de inyección del bootstrap, recursos web y controlador de página.
+12. E2E de Jellyfin Web en Chromium: inicio de sesión, menú `Comunidad`, carga del foro, creación de tema y separación de permisos.
+13. Revisión automática del registro de runtime para errores emitidos por `Jellyfin.Plugin.Community`.
+14. Generación de `VALIDATION-REPORT.md` a partir de las evidencias de esa misma ejecución.
 
-## Validación operativa restante
+Las pruebas E2E se ejecutan con una configuración Jellyfin nueva para evitar que una instalación previa o una base de datos residual oculte errores de inicialización.
 
-La automatización no sustituye una prueba física sobre el servidor final. Antes de habilitarlo para usuarios:
+## Qué no significa “validado”
 
-1. Realice una copia del directorio de datos de Jellyfin.
-2. Instale el plugin con Jellyfin detenido.
-3. Revise el registro de arranque y confirme que no aparecen errores de carga de ensamblados o migraciones.
-4. Compruebe creación de categorías, publicación, moderación, adjuntos, búsqueda, copias y restauración en una instalación de ensayo.
-5. Verifique la interfaz con el tema y el navegador usados en el Synology.
-6. Pruebe la retirada del plugin y la restauración de la copia.
+Una ejecución verde demuestra que el artefacto final compila, carga y funciona en la versión oficial de servidor y cliente web probada. No demuestra que sea imposible encontrar un defecto en otra combinación de navegador, proxy inverso, permisos de filesystem, arquitectura de CPU o configuración de Synology.
+
+Por eso, antes de habilitar una actualización en producción, se recomienda conservar una copia del directorio de datos de Jellyfin y revisar el registro del primer arranque en el servidor final.
