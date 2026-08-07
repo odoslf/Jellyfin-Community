@@ -1,0 +1,70 @@
+name: Bootstrap repository source
+
+on:
+  push:
+    branches:
+      - release/jellyfin-10.10.7-net8
+    paths:
+      - '.bootstrap/READY'
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out bootstrap branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct and verify source archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat \
+            .bootstrap/source.b64.part-00 \
+            .bootstrap/exact/part-01 \
+            .bootstrap/exact/part-02 \
+            .bootstrap/exact/part-03 \
+            .bootstrap/exact/part-04 \
+            .bootstrap/exact/part-05 \
+            .bootstrap/exact/part-06 \
+            .bootstrap/exact/part-07 \
+            .bootstrap/exact/part-08a \
+            .bootstrap/exact/part-08b \
+            .bootstrap/exact/part-09 \
+            .bootstrap/source.b64.part-02 \
+            > "$RUNNER_TEMP/source.b64"
+          test "$(wc -c < "$RUNNER_TEMP/source.b64")" -eq 104652
+          base64 --decode "$RUNNER_TEMP/source.b64" > "$RUNNER_TEMP/source.tar.gz"
+          echo '04e2ff95c43c82beeb4d0c2922466a1420de478f9b9cfe9b48cc569dfa5247e7  '"$RUNNER_TEMP/source.tar.gz" | sha256sum --check --strict
+          mkdir "$RUNNER_TEMP/source"
+          tar -xzf "$RUNNER_TEMP/source.tar.gz" -C "$RUNNER_TEMP/source"
+          test -f "$RUNNER_TEMP/source/Jellyfin.Plugin.Community.sln"
+          test -f "$RUNNER_TEMP/source/.github/workflows/build.yml"
+          test -f "$RUNNER_TEMP/source/.github/workflows/publish-1.0.0.0.yml"
+
+      - name: Import verified source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          rsync -a --delete \
+            --exclude='.git/' \
+            --exclude='.bootstrap/' \
+            "$RUNNER_TEMP/source/" ./
+          rm -rf .bootstrap
+          git status --short
+
+      - name: Commit imported source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "release: import validated Jellyfin 10.10.7 net8 source"
+          git push origin HEAD:release/jellyfin-10.10.7-net8
