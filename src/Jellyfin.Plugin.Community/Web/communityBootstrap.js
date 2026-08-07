@@ -6,6 +6,9 @@
     const COMMUNITY_PAGE_ID = 'CommunityPage';
     const API_SEGMENT = '/Community/api/v1/';
     let mutationScheduled = false;
+    let communityPage = null;
+    let previousPageState = [];
+    let openingPromise = null;
 
     function normalizeCommunityJson(value) {
         if (Array.isArray(value)) {
@@ -93,17 +96,137 @@
         });
     }
 
-    function navigateToCommunity(event) {
-        if (event) {
-            event.preventDefault();
+    function getConfigurationResourceUrl(name) {
+        if (window.Dashboard?.getConfigurationResourceUrl) {
+            return window.Dashboard.getConfigurationResourceUrl(name);
         }
+        return ApiClient.getUrl('web/ConfigurationPage', { name });
+    }
 
-        if (window.Dashboard?.navigate && window.Dashboard?.getPluginUrl) {
-            window.Dashboard.navigate(window.Dashboard.getPluginUrl('Community'));
+    function closeDrawerIfOpen() {
+        if (!document.querySelector('.mainDrawer.drawer-open')) {
+            return;
+        }
+        const button = document.querySelector('.mainDrawerButton:not(.hide)');
+        if (button instanceof HTMLElement) {
+            button.click();
+        }
+    }
+
+    function closeCommunity() {
+        if (!communityPage) {
+            updateSelectedState();
             return;
         }
 
-        window.location.hash = '#/configurationpage?name=Community';
+        communityPage.dispatchEvent(new CustomEvent('viewdestroy', { bubbles: true }));
+        communityPage.remove();
+        communityPage = null;
+
+        for (const entry of previousPageState) {
+            if (!entry.element.isConnected) {
+                continue;
+            }
+            entry.element.classList.toggle('hide', entry.wasHidden);
+        }
+        previousPageState = [];
+        document.documentElement.classList.remove('jellyfinCommunityOpen');
+        updateSelectedState();
+    }
+
+    async function openCommunity(event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        if (communityPage?.isConnected) {
+            closeDrawerIfOpen();
+            communityPage.classList.remove('hide');
+            communityPage.dispatchEvent(new CustomEvent('viewshow', { bubbles: true }));
+            updateSelectedState(communityPage);
+            return;
+        }
+
+        if (openingPromise) {
+            return openingPromise;
+        }
+
+        openingPromise = (async () => {
+            closeDrawerIfOpen();
+            const container = document.querySelector('.mainAnimatedPages');
+            if (!container) {
+                throw new Error('Jellyfin Web no ha creado todavía el contenedor principal de páginas.');
+            }
+
+            const headers = {};
+            if (typeof ApiClient.setRequestHeaders === 'function') {
+                ApiClient.setRequestHeaders(headers);
+            }
+
+            const [pageResponse, controllerModule] = await Promise.all([
+                fetch(getConfigurationResourceUrl('Community'), {
+                    headers,
+                    credentials: 'same-origin',
+                    cache: 'no-store'
+                }),
+                import(`${getConfigurationResourceUrl('CommunityPageController')}&v=${encodeURIComponent(VERSION)}`)
+            ]);
+
+            if (!pageResponse.ok) {
+                throw new Error(`No se pudo cargar Comunidad (HTTP ${pageResponse.status}).`);
+            }
+
+            const html = await pageResponse.text();
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = html;
+            const page = wrapper.querySelector(`div[data-role="page"]#${COMMUNITY_PAGE_ID}`);
+            if (!(page instanceof HTMLElement)) {
+                throw new Error('El recurso web de Community no contiene una página válida.');
+            }
+
+            const Controller = controllerModule.default;
+            if (typeof Controller !== 'function') {
+                throw new Error('El controlador web de Community no se pudo cargar.');
+            }
+
+            previousPageState = Array.from(container.children)
+                .filter(element => element instanceof HTMLElement)
+                .map(element => ({ element, wasHidden: element.classList.contains('hide') }));
+            for (const entry of previousPageState) {
+                entry.element.classList.add('hide');
+            }
+
+            page.removeAttribute('data-controller');
+            page.classList.add('mainAnimatedPage', 'jellyfinCommunityStandalonePage');
+            page.classList.remove('hide');
+            container.appendChild(page);
+            communityPage = page;
+            document.documentElement.classList.add('jellyfinCommunityOpen');
+
+            page.addEventListener('click', clickEvent => {
+                const anchor = clickEvent.target.closest?.('a[href^="#!"],a[href^="#/"]');
+                if (anchor) {
+                    closeCommunity();
+                }
+            }, { capture: true });
+
+            new Controller(page, {});
+            page.dispatchEvent(new CustomEvent('viewshow', { bubbles: true }));
+            page.dispatchEvent(new CustomEvent('pageshow', { bubbles: true }));
+            updateSelectedState(page);
+        })().catch(error => {
+            closeCommunity();
+            console.error('[Community] No se pudo abrir la interfaz del foro.', error);
+            if (window.Dashboard?.alert) {
+                window.Dashboard.alert(`No se pudo abrir Comunidad: ${error.message}`);
+            }
+            throw error;
+        }).finally(() => {
+            openingPromise = null;
+        });
+
+        return openingPromise;
     }
 
     function createMenuLink() {
@@ -112,8 +235,8 @@
         link.setAttribute(MENU_ATTRIBUTE, 'true');
         link.setAttribute('data-itemid', 'community');
         link.className = 'navMenuOption lnkMediaFolder jellyfinCommunityMenuOption';
-        link.href = '#/configurationpage?name=Community';
-        link.addEventListener('click', navigateToCommunity);
+        link.href = '#/community';
+        link.addEventListener('click', openCommunity);
 
         const icon = document.createElement('span');
         icon.className = 'material-icons navMenuOptionIcon forum';
@@ -138,8 +261,7 @@
     }
 
     function updateSelectedState(page) {
-        const isCommunity = page?.id === COMMUNITY_PAGE_ID
-            || document.querySelector(`#${COMMUNITY_PAGE_ID}:not(.hide)`) !== null;
+        const isCommunity = page?.id === COMMUNITY_PAGE_ID || communityPage?.isConnected === true;
         document.querySelectorAll(`[${MENU_ATTRIBUTE}]`).forEach(link => {
             link.classList.toggle('navMenuOption-selected', isCommunity);
         });
@@ -163,13 +285,22 @@
         const observer = new MutationObserver(scheduleEnsureMenuLinks);
         observer.observe(document.documentElement, { childList: true, subtree: true });
 
-        document.addEventListener('viewshow', event => updateSelectedState(event.target));
+        document.addEventListener('viewshow', event => {
+            if (communityPage && event.target !== communityPage && !communityPage.contains(event.target)) {
+                closeCommunity();
+                return;
+            }
+            updateSelectedState(event.target);
+        });
         document.addEventListener('pageshow', event => updateSelectedState(event.target));
+        window.addEventListener('popstate', closeCommunity);
+        window.addEventListener('hashchange', closeCommunity);
 
         window.JellyfinCommunityBootstrap = Object.freeze({
             version: VERSION,
             ensureMenuLinks,
-            navigateToCommunity,
+            openCommunity,
+            closeCommunity,
             normalizeCommunityJson
         });
     }
