@@ -1,10 +1,10 @@
 # Informe de validación reproducible
 
-- Fecha UTC: `2026-08-04T23:39:46.887888Z`
-- Commit validado: `5dfa17ea44fecdaaaead8357ac2d5a49e4f0d347`
-- Ejecución CI: https://github.com/odoslf/X4/actions/runs/30960675838
+- Fecha UTC: `2026-08-07T19:08:51.657274Z`
+- Commit validado: `9f552fc7ab82388498bc077347bc5c4ebddfcd11`
+- Ejecución CI: https://github.com/odoslf/Jellyfin-Community/actions/runs/31210122703
 - Jellyfin objetivo: `10.10.7`
-- ABI objetivo: `10.10.0.0`
+- ABI de catálogo objetivo: `10.10.7.0`
 - Framework: `net8.0`
 - SDK de compilación: `8.0.423`
 - Plugin: `1.0.0.0`
@@ -22,7 +22,7 @@
 
 ## Paquete instalable
 
-- SHA-256: `890e474e463b96d73915b90e391ae607e6aa5f4d08210f65170e869a4a5b2dcc`
+- SHA-256: `56044556a6481130a888f5ef8d9f19d5ac7d16071787e94d7ced6afff9be2ad3`
 - Contenido permitido: `Jellyfin.Plugin.Community.dll, Markdig.dll`
 - Número de entradas: `2`
 
