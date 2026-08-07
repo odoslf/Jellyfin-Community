@@ -69,6 +69,7 @@ jobs:
           rsync -a --delete \
             --exclude='.git/' \
             --exclude='.bootstrap/' \
+            --exclude='.github/workflows/' \
             "$RUNNER_TEMP/source/" ./
           rm -rf .bootstrap
           git status --short
