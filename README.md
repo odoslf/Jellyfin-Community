@@ -62,7 +62,7 @@ El artefacto publicado fue construido y validado para Jellyfin 10.10.7 con .NET 
 SHA-256 del paquete 1.0.0.0:
 
 ```text
-890e474e463b96d73915b90e391ae607e6aa5f4d08210f65170e869a4a5b2dcc
+60608e0e88ef69acbbf1c65ae273ff18a38c6218989f4504dabf2e51f59e5845
 ```
 
 Consulte [el informe de validación](docs/VALIDATION-REPORT.md) y [la arquitectura](docs/ARCHITECTURE.md) para más detalles. La validación automatizada no sustituye una prueba final en el hardware y la instalación concreta del servidor.
