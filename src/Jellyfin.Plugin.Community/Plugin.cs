@@ -1,5 +1,6 @@
 using System.Globalization;
 using Jellyfin.Plugin.Community.Configuration;
+using Jellyfin.Plugin.Community.WebIntegration;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
@@ -35,9 +36,19 @@ public sealed class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
                 Name = "Community",
                 DisplayName = "Comunidad",
                 EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Web.community.html", ns),
-                EnableInMainMenu = true,
-                MenuSection = "Community",
-                MenuIcon = "forum"
+                EnableInMainMenu = false
+            },
+            new PluginPageInfo
+            {
+                Name = "CommunityPageController",
+                EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Web.communityPageController.js", ns),
+                EnableInMainMenu = false
+            },
+            new PluginPageInfo
+            {
+                Name = CommunityIndexHtmlTransformer.BootstrapPageName,
+                EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Web.communityBootstrap.js", ns),
+                EnableInMainMenu = false
             },
             new PluginPageInfo
             {
