@@ -29,7 +29,8 @@ jobs:
             .bootstrap/source.b64.part-00
             .bootstrap/exact/part-01
             .bootstrap/exact/part-02a
-            .bootstrap/exact/part-02b
+            .bootstrap/exact/part-02b1
+            .bootstrap/exact/part-02b2
             .bootstrap/exact/part-03
             .bootstrap/exact/part-04a
             .bootstrap/exact/part-04b
@@ -42,11 +43,7 @@ jobs:
             .bootstrap/exact/part-09
             .bootstrap/source.b64.part-02
           )
-          wc -c "${inputs[@]}"
-          sha256sum "${inputs[@]}"
           cat "${inputs[@]}" > "$RUNNER_TEMP/source.b64"
-          echo 'Expected combined base64 SHA-256: 4b76984e6c91b14d7d9a9c186ffe3a0d26ebe7fd5a42a46ed1ae68a82a066163'
-          sha256sum "$RUNNER_TEMP/source.b64"
           test "$(wc -c < "$RUNNER_TEMP/source.b64")" -eq 104652
           echo '4b76984e6c91b14d7d9a9c186ffe3a0d26ebe7fd5a42a46ed1ae68a82a066163  '"$RUNNER_TEMP/source.b64" | sha256sum --check --strict
           base64 --decode "$RUNNER_TEMP/source.b64" > "$RUNNER_TEMP/source.tar.gz"
