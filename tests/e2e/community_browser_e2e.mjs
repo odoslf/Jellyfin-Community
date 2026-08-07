@@ -7,10 +7,16 @@ const admin = { name: 'community-admin', password: 'community-admin-password' };
 function attachDiagnostics(page, label) {
     const pageErrors = [];
     const communityConsoleErrors = [];
-    page.on('pageerror', error => pageErrors.push(`${label}: ${error.message}`));
+    page.on('pageerror', error => {
+        const value = `${label}: ${error.message}`;
+        pageErrors.push(value);
+        console.error(value);
+    });
     page.on('console', message => {
         if (message.type() === 'error' && /community/i.test(message.text())) {
-            communityConsoleErrors.push(`${label}: ${message.text()}`);
+            const value = `${label}: ${message.text()}`;
+            communityConsoleErrors.push(value);
+            console.error(value);
         }
     });
     return () => {
@@ -62,7 +68,21 @@ async function openCommunity(page) {
 
     await communityLink.click();
     await page.locator('#CommunityPage').waitFor({ state: 'visible', timeout: 30_000 });
-    await page.locator('#communityMain .community-grid').waitFor({ state: 'visible', timeout: 30_000 });
+    try {
+        await page.waitForFunction(() => {
+            return Boolean(document.querySelector('#communityMain .community-grid'))
+                || Boolean(document.querySelector('#communityBanner .community-error'));
+        }, null, { timeout: 30_000 });
+    } catch (error) {
+        const snapshot = await page.locator('#CommunityPage').innerText().catch(() => '<CommunityPage missing>');
+        throw new Error(`Community controller did not finish initialization. Visible page text:\n${snapshot}\n${error.message}`);
+    }
+
+    const errorBanner = page.locator('#communityBanner .community-error');
+    if (await errorBanner.count()) {
+        throw new Error(`Community initialization error: ${await errorBanner.innerText()}`);
+    }
+    await page.locator('#communityMain .community-grid').waitFor({ state: 'visible', timeout: 5_000 });
     await page.locator('.community-category').first().waitFor({ state: 'visible' });
 }
 
