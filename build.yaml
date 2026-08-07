@@ -1,19 +1,21 @@
 ---
 name: "Community"
 guid: "c24c5b8e-2fa8-47f6-a671-a7eb9d60c114"
-version: "1.0.0.0"
+version: "1.1.0.0"
 targetAbi: "10.10.7.0"
 framework: "net8.0"
 overview: "Foro local integrado con los usuarios y bibliotecas de Jellyfin."
 description: >
-  Community añade categorías, conversaciones vinculadas a contenidos, mensajes,
-  menciones, reacciones, encuestas, spoilers, notificaciones, moderación,
-  adjuntos opcionales, copias y mantenimiento local mediante SQLite.
+  Community añade una sección de foro accesible desde Jellyfin Web para usuarios
+  normales y administradores, con categorías, conversaciones, menciones,
+  reacciones, encuestas, spoilers, notificaciones, moderación, adjuntos opcionales,
+  copias y mantenimiento local mediante SQLite.
 category: "General"
-owner: "o2"
+owner: "odoslf"
 artifacts:
 - "Jellyfin.Plugin.Community.dll"
 - "Markdig.dll"
 changelog: >
-  Versión 1.0 para Jellyfin 10.10.7 y .NET 8 con backend, API, interfaz,
-  moderación, almacenamiento, tareas programadas, copias y pruebas automatizadas.
+  1.1 corrige la integración web de 1.0: el frontend usa el ciclo de controladores
+  de Jellyfin 10.10.7, añade Comunidad al menú de usuarios, incorpora administración
+  funcional y exige pruebas E2E reales contra Jellyfin 10.10.7 y Chromium.
