@@ -160,6 +160,25 @@ public sealed record AuditEntryDto(
     string? AfterJson,
     DateTime CreatedUtc);
 
+public sealed record CommunityKnownUserDto(
+    Guid Id,
+    string Username,
+    DateTime FirstSeenUtc,
+    DateTime LastSeenUtc,
+    bool IsModerator,
+    long? ModeratorCategoryId,
+    bool IsMuted,
+    DateTime? MutedUntilUtc,
+    bool IsSuspended,
+    DateTime? SuspendedUntilUtc);
+
+public sealed record WebIntegrationStatusDto(
+    string Version,
+    long IndexRequestsSeen,
+    long IndexResponsesTransformed,
+    DateTime? LastInjectionUtc,
+    string? LastError);
+
 public sealed record StorageStatsDto(
     long DatabaseBytes,
     long AttachmentsBytes,
