@@ -46,6 +46,7 @@ jobs:
           cp src/Jellyfin.Plugin.Community/Web/communityPageController.js "$RUNNER_TEMP/communityPageController.mjs"
           node --check "$RUNNER_TEMP/communityPageController.mjs"
           python -m py_compile tests/e2e/community_api_e2e.py
+          python -m py_compile scripts/create-validation-report.py
           node --check tests/e2e/community_browser_e2e.mjs
           if grep -qi '<script' src/Jellyfin.Plugin.Community/Web/community.html; then
             echo 'Community page must not contain inline scripts.' >&2
@@ -143,6 +144,20 @@ jobs:
             grep -q 'Jellyfin Community initialized' artifacts/jellyfin-10.10.7-runtime.log
           fi
 
+      - name: Generate evidence-based validation report
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/create-validation-report.py \
+            --root . \
+            --artifacts artifacts \
+            --dotnet-version "$(dotnet --version)" \
+            --commit "$GITHUB_SHA" \
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --output artifacts/VALIDATION-REPORT.md
+          test -s artifacts/VALIDATION-REPORT.md
+
       - name: Stop runtime container
         if: always()
         run: docker rm -f jellyfin-community-e2e || true
@@ -156,6 +171,7 @@ jobs:
           path: |
             artifacts/Jellyfin.Plugin.Community_1.1.0.0.zip
             artifacts/Jellyfin.Plugin.Community_1.1.0.0.zip.sha256
+            artifacts/VALIDATION-REPORT.md
             artifacts/runtime-api-e2e.json
             artifacts/runtime-browser-e2e.txt
             artifacts/jellyfin-10.10.7-runtime.log
