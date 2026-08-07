@@ -1,0 +1,123 @@
+name: Publish 1.0.0.0 for Jellyfin 10.10.7
+
+on:
+  push:
+    branches: ['release/jellyfin-10.10.7-net8']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-community-1.0.0.0
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DOTNET_NOLOGO: 'true'
+      DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+      NUGET_XMLDOC_MODE: skip
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.423
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Restore
+        run: dotnet restore Jellyfin.Plugin.Community.sln --force-evaluate
+
+      - name: Build with static analysis
+        run: dotnet build Jellyfin.Plugin.Community.sln -c Release --no-restore --warnaserror
+
+      - name: Test with coverage
+        run: dotnet test Jellyfin.Plugin.Community.sln -c Release --no-build --logger "trx;LogFileName=community-tests.trx" --collect:"XPlat Code Coverage"
+
+      - name: Dependency vulnerability audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet list Jellyfin.Plugin.Community.sln package --vulnerable --include-transitive | tee vulnerability-audit.txt
+          if grep -Eiq 'has the following vulnerable packages|\b(Critical|High|Moderate|Low)\b' vulnerability-audit.txt; then
+            echo 'Vulnerable dependency detected.' >&2
+            exit 1
+          fi
+
+      - name: Publish deterministic package
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf artifacts
+          mkdir -p artifacts/publish dist
+          dotnet publish src/Jellyfin.Plugin.Community/Jellyfin.Plugin.Community.csproj -c Release --no-restore -o artifacts/publish
+          python3 scripts/package.py --publish artifacts/publish --output artifacts/Jellyfin.Plugin.Community_1.0.0.0.zip
+          unzip -t artifacts/Jellyfin.Plugin.Community_1.0.0.0.zip
+          cp artifacts/Jellyfin.Plugin.Community_1.0.0.0.zip dist/Jellyfin.Plugin.Community_1.0.0.0_Jellyfin-10.10.7_net8.zip
+          sha256sum dist/Jellyfin.Plugin.Community_1.0.0.0_Jellyfin-10.10.7_net8.zip > dist/Jellyfin.Plugin.Community_1.0.0.0_Jellyfin-10.10.7_net8.zip.sha256
+          md5sum dist/Jellyfin.Plugin.Community_1.0.0.0_Jellyfin-10.10.7_net8.zip > dist/Jellyfin.Plugin.Community_1.0.0.0_Jellyfin-10.10.7_net8.zip.md5
+
+      - name: Generate Jellyfin repository manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/create-manifest.py \
+            --zip dist/Jellyfin.Plugin.Community_1.0.0.0_Jellyfin-10.10.7_net8.zip \
+            --source-url 'https://raw.githubusercontent.com/odoslf/Jellyfin-Community/release-1.0.0.0/dist/Jellyfin.Plugin.Community_1.0.0.0_Jellyfin-10.10.7_net8.zip' \
+            --output manifest.json
+          python3 - <<'PY'
+          import hashlib, json, pathlib, re, zipfile
+          package = pathlib.Path('dist/Jellyfin.Plugin.Community_1.0.0.0_Jellyfin-10.10.7_net8.zip')
+          data = json.loads(pathlib.Path('manifest.json').read_text(encoding='utf-8'))
+          assert len(data) == 1
+          plugin = data[0]
+          assert plugin['guid'] == 'c24c5b8e-2fa8-47f6-a671-a7eb9d60c114'
+          version = plugin['versions'][0]
+          assert version['version'] == '1.0.0.0'
+          assert version['targetAbi'] == '10.10.7.0'
+          assert version['checksum'] == hashlib.md5(package.read_bytes(), usedforsecurity=False).hexdigest().upper()
+          assert re.fullmatch(r'[0-9A-F]{32}', version['checksum'])
+          with zipfile.ZipFile(package) as zf:
+              assert zf.testzip() is None
+              assert sorted(zf.namelist()) == ['Jellyfin.Plugin.Community.dll', 'Markdig.dll']
+          print('manifest and package validation OK')
+          PY
+
+      - name: Generate validation report
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp vulnerability-audit.txt artifacts/vulnerability-audit.txt
+          python3 scripts/create-validation-report.py \
+            --root . \
+            --artifacts artifacts \
+            --dotnet-version "$(dotnet --version)" \
+            --commit "$GITHUB_SHA" \
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --output docs/VALIDATION-REPORT.md
+
+      - name: Commit validated publication files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add manifest.json dist docs/VALIDATION-REPORT.md
+          if git diff --cached --quiet; then
+            echo 'Publication files already match.'
+            exit 0
+          fi
+          git commit -m 'release: publish Community 1.0.0.0 for Jellyfin 10.10.7 [skip ci]'
+          git push origin HEAD:${GITHUB_REF_NAME}
