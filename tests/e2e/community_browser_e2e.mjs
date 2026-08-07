@@ -52,11 +52,23 @@ async function openCommunity(page) {
     await page.locator('.community-category').first().waitFor({ state: 'visible' });
 }
 
+async function assertNoPageOverflow(page) {
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    if (overflow > 4) {
+        throw new Error(`Community produces ${overflow}px of horizontal overflow on the mobile viewport.`);
+    }
+}
+
 const browser = await chromium.launch({ headless: true });
 try {
-    const userContext = await browser.newContext();
+    const userContext = await browser.newContext({
+        viewport: { width: 390, height: 844 },
+        isMobile: true,
+        hasTouch: true,
+        deviceScaleFactor: 1,
+    });
     const userPage = await userContext.newPage();
-    const assertUserNoErrors = attachDiagnostics(userPage, 'ordinary-user');
+    const assertUserNoErrors = attachDiagnostics(userPage, 'ordinary-user-mobile');
     await login(userPage, user);
     await openCommunity(userPage);
 
@@ -69,6 +81,7 @@ try {
         throw new Error('Ordinary users must not see the Community moderation tab.');
     }
 
+    await assertNoPageOverflow(userPage);
     await userPage.locator('#communityNewThread').click();
     await userPage.locator('#newThreadForm').waitFor({ state: 'visible' });
     await userPage.locator('#newTitle').fill('Community browser E2E thread');
@@ -77,12 +90,19 @@ try {
     await userPage.locator('#newThreadForm button[type="submit"]').click();
     await userPage.locator('h2').filter({ hasText: 'Community browser E2E thread' }).waitFor({ state: 'visible', timeout: 30_000 });
     await userPage.locator('#communityReplyForm').waitFor({ state: 'visible' });
+    await assertNoPageOverflow(userPage);
+    await userPage.screenshot({ path: 'artifacts/e2e-user-mobile.png', fullPage: true });
     assertUserNoErrors();
     await userContext.close();
 
-    const adminContext = await browser.newContext();
+    const adminContext = await browser.newContext({
+        viewport: { width: 430, height: 932 },
+        isMobile: true,
+        hasTouch: true,
+        deviceScaleFactor: 1,
+    });
     const adminPage = await adminContext.newPage();
-    const assertAdminNoErrors = attachDiagnostics(adminPage, 'administrator');
+    const assertAdminNoErrors = attachDiagnostics(adminPage, 'administrator-mobile');
     await login(adminPage, admin);
     await openCommunity(adminPage);
     await adminPage.locator('#communityAdminTab').waitFor({ state: 'visible' });
@@ -92,10 +112,21 @@ try {
     await adminPage.getByText('Usuarios conocidos', { exact: true }).waitFor({ state: 'visible' });
     await adminPage.getByText('Activa', { exact: true }).waitFor({ state: 'visible' });
     await adminPage.getByText('community-user', { exact: true }).waitFor({ state: 'visible' });
+    await assertNoPageOverflow(adminPage);
+    await adminPage.screenshot({ path: 'artifacts/e2e-admin-mobile.png', fullPage: true });
     assertAdminNoErrors();
     await adminContext.close();
 
-    console.log(JSON.stringify({ status: 'passed', ordinaryUser: true, administrator: true, menu: true, createThread: true, adminPanel: true }));
+    console.log(JSON.stringify({
+        status: 'passed',
+        ordinaryUser: true,
+        administrator: true,
+        menu: true,
+        createThread: true,
+        adminPanel: true,
+        mobileViewport: true,
+        horizontalOverflow: false,
+    }));
 } finally {
     await browser.close();
 }
