@@ -47,12 +47,18 @@ async function login(page, credentials) {
 
 async function openCommunity(page) {
     const communityLink = page.locator('[data-jellyfin-community-menu]').first();
-    if (!(await communityLink.isVisible())) {
-        const drawerButton = page.locator('.mainDrawerButton:not(.hide)').first();
-        await drawerButton.waitFor({ state: 'visible', timeout: 30_000 });
-        await drawerButton.click();
-        await communityLink.waitFor({ state: 'visible', timeout: 30_000 });
-    }
+    const drawerButton = page.locator('.mainDrawerButton:not(.hide)').first();
+    await drawerButton.waitFor({ state: 'visible', timeout: 30_000 });
+    await drawerButton.click();
+    await page.locator('.mainDrawer.drawer-open').waitFor({ state: 'attached', timeout: 30_000 });
+    await page.waitForFunction(() => {
+        const link = document.querySelector('[data-jellyfin-community-menu]');
+        if (!link) return false;
+        const rect = link.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0
+            && rect.right > 0 && rect.left < window.innerWidth
+            && rect.bottom > 0 && rect.top < window.innerHeight;
+    }, null, { timeout: 30_000 });
 
     await communityLink.click();
     await page.locator('#CommunityPage').waitFor({ state: 'visible', timeout: 30_000 });
