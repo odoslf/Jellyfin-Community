@@ -16,6 +16,18 @@ USER_NAME = "community-user"
 USER_PASSWORD = "community-user-password"
 
 
+def normalize_keys(value):
+    if isinstance(value, list):
+        return [normalize_keys(item) for item in value]
+    if isinstance(value, dict):
+        result = {}
+        for key, child in value.items():
+            normalized_key = key[0].lower() + key[1:] if key and key[0].isupper() else key
+            result[normalized_key] = normalize_keys(child)
+        return result
+    return value
+
+
 def call(method: str, path: str, body=None, token: str | None = None, expected=(200, 204), raw=False):
     data = None
     headers = {"Accept": "application/json"}
@@ -39,7 +51,7 @@ def call(method: str, path: str, body=None, token: str | None = None, expected=(
         return status, payload, content_type
     if not payload:
         return None
-    return json.loads(payload.decode("utf-8"))
+    return normalize_keys(json.loads(payload.decode("utf-8")))
 
 
 def wait_for_server():
@@ -58,7 +70,7 @@ def wait_for_server():
 
 def authenticate(username: str, password: str) -> str:
     result = call("POST", "/Users/AuthenticateByName", {"Username": username, "Pw": password}, expected=(200,))
-    token = result.get("AccessToken") or result.get("accessToken")
+    token = result.get("accessToken")
     if not token:
         raise AssertionError(f"No access token returned for {username}")
     return token
@@ -70,7 +82,7 @@ def main() -> int:
     # Jellyfin's own 10.10.7 integration tests call Startup/User before updating
     # the first account because the GET initializes the user manager/database.
     initial_user = call("GET", "/Startup/User", expected=(200,))
-    assert initial_user.get("Name") or initial_user.get("name"), initial_user
+    assert initial_user.get("name"), initial_user
 
     call("POST", "/Startup/Configuration", {
         "UICulture": "es-ES",
@@ -92,6 +104,7 @@ def main() -> int:
     bootstrap = bootstrap_bytes.decode("utf-8", errors="replace")
     assert "JellyfinCommunityBootstrap" in bootstrap
     assert "customMenuOptions" in bootstrap
+    assert "__communityAjaxAdapterInstalled" in bootstrap
 
     _, controller_bytes, _ = call("GET", "/web/ConfigurationPage?name=CommunityPageController", token=admin_token, expected=(200,), raw=True)
     controller = controller_bytes.decode("utf-8", errors="replace")
@@ -110,7 +123,7 @@ def main() -> int:
     assert len(categories) >= 3, categories
 
     created_user = call("POST", "/Users/New", {"Name": USER_NAME, "Password": USER_PASSWORD}, token=admin_token, expected=(200,))
-    assert created_user.get("Name") == USER_NAME or created_user.get("name") == USER_NAME
+    assert created_user.get("name") == USER_NAME
     user_token = authenticate(USER_NAME, USER_PASSWORD)
 
     me_user = call("GET", "/Community/api/v1/me", token=user_token, expected=(200,))
