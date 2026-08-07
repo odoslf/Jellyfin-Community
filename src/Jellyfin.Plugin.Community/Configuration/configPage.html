@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Community</title>
+</head>
+<body>
+<div id="CommunityConfigurationPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox">
+    <div data-role="content">
+        <div class="content-primary">
+            <h2>Jellyfin Community</h2>
+            <form id="CommunityConfigurationForm">
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label><input id="Enabled" type="checkbox" is="emby-checkbox"><span>Activar Community</span></label>
+                    <div class="fieldDescription">Desactiva temporalmente la publicación sin eliminar datos.</div>
+                </div>
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label><input id="EnableSmartSpoilers" type="checkbox" is="emby-checkbox"><span>Spoilers según estado visto</span></label>
+                </div>
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label><input id="EnableAttachments" type="checkbox" is="emby-checkbox"><span>Permitir imágenes adjuntas</span></label>
+                </div>
+                <div class="inputContainer"><label class="inputLabel" for="MaxAttachmentBytes">Tamaño máximo por imagen, bytes</label><input id="MaxAttachmentBytes" type="number" min="1024" is="emby-input"></div>
+                <div class="inputContainer"><label class="inputLabel" for="MaxAttachmentsPerPost">Imágenes por publicación</label><input id="MaxAttachmentsPerPost" type="number" min="0" max="20" is="emby-input"></div>
+                <div class="inputContainer"><label class="inputLabel" for="GlobalAttachmentQuotaBytes">Cuota global de imágenes, bytes</label><input id="GlobalAttachmentQuotaBytes" type="number" min="0" is="emby-input"></div>
+                <div class="inputContainer"><label class="inputLabel" for="MaxTitleLength">Longitud máxima de títulos</label><input id="MaxTitleLength" type="number" min="1" max="1000" is="emby-input"></div>
+                <div class="inputContainer"><label class="inputLabel" for="MaxPostLength">Longitud máxima de mensajes</label><input id="MaxPostLength" type="number" min="1" max="200000" is="emby-input"></div>
+                <div class="inputContainer"><label class="inputLabel" for="EditWindowMinutes">Ventana de edición, minutos</label><input id="EditWindowMinutes" type="number" min="0" is="emby-input"></div>
+                <div class="inputContainer"><label class="inputLabel" for="NewThreadsPerHour">Temas por hora y usuario</label><input id="NewThreadsPerHour" type="number" min="1" is="emby-input"></div>
+                <div class="inputContainer"><label class="inputLabel" for="RepliesPerHour">Respuestas por hora y usuario</label><input id="RepliesPerHour" type="number" min="1" is="emby-input"></div>
+                <div class="inputContainer"><label class="inputLabel" for="MinimumSecondsBetweenPosts">Segundos mínimos entre publicaciones</label><input id="MinimumSecondsBetweenPosts" type="number" min="0" is="emby-input"></div>
+                <div class="inputContainer"><label class="inputLabel" for="MaxMentionsPerPost">Menciones máximas por mensaje</label><input id="MaxMentionsPerPost" type="number" min="0" max="100" is="emby-input"></div>
+                <div class="inputContainer"><label class="inputLabel" for="NotificationRetentionDays">Conservación de notificaciones, días</label><input id="NotificationRetentionDays" type="number" min="1" is="emby-input"></div>
+                <div class="inputContainer"><label class="inputLabel" for="DraftRetentionDays">Conservación de borradores, días</label><input id="DraftRetentionDays" type="number" min="1" is="emby-input"></div>
+                <div class="inputContainer"><label class="inputLabel" for="DeletedAttachmentRetentionDays">Conservación de imágenes borradas, días</label><input id="DeletedAttachmentRetentionDays" type="number" min="0" is="emby-input"></div>
+                <div class="inputContainer"><label class="inputLabel" for="BackupRetentionCount">Copias que se conservan</label><input id="BackupRetentionCount" type="number" min="1" max="100" is="emby-input"></div>
+                <div class="inputContainer"><label class="inputLabel" for="DatabaseWarningBytes">Aviso de base de datos, bytes</label><input id="DatabaseWarningBytes" type="number" min="0" is="emby-input"></div>
+                <div class="inputContainer"><label class="inputLabel" for="DatabaseCriticalBytes">Aviso crítico de base de datos, bytes</label><input id="DatabaseCriticalBytes" type="number" min="0" is="emby-input"></div>
+                <div class="inputContainer"><label class="inputLabel" for="ModeratorUserIds">GUID de moderadores, uno por línea</label><textarea id="ModeratorUserIds" rows="6" is="emby-input"></textarea></div>
+                <div class="inputContainer"><label class="inputLabel" for="BlockedTerms">Términos bloqueados, uno por línea</label><textarea id="BlockedTerms" rows="6" is="emby-input"></textarea></div>
+                <div class="inputContainer"><label class="inputLabel" for="AllowedReactions">Reacciones permitidas, una por línea</label><textarea id="AllowedReactions" rows="5" is="emby-input"></textarea></div>
+                <div class="checkboxContainer checkboxContainer-withDescription"><label><input id="RequireApprovalForFirstPost" type="checkbox" is="emby-checkbox"><span>Exigir aprobación previa</span></label></div>
+                <div class="checkboxContainer checkboxContainer-withDescription"><label><input id="AllowRemoteImages" type="checkbox" is="emby-checkbox"><span>Permitir imágenes remotas en Markdown</span></label></div>
+                <div class="checkboxContainer checkboxContainer-withDescription"><label><input id="LogModerationActions" type="checkbox" is="emby-checkbox"><span>Registrar acciones administrativas</span></label></div>
+                <button is="emby-button" type="submit" class="raised button-submit block"><span>Guardar</span></button>
+            </form>
+        </div>
+    </div>
+    <script type="text/javascript">
+    (() => {
+        const pluginId = 'c24c5b8e-2fa8-47f6-a671-a7eb9d60c114';
+        const page = document.querySelector('#CommunityConfigurationPage');
+        const booleans = ['Enabled','EnableSmartSpoilers','EnableAttachments','RequireApprovalForFirstPost','AllowRemoteImages','LogModerationActions'];
+        const numbers = ['MaxAttachmentBytes','MaxAttachmentsPerPost','GlobalAttachmentQuotaBytes','MaxTitleLength','MaxPostLength','EditWindowMinutes','NewThreadsPerHour','RepliesPerHour','MinimumSecondsBetweenPosts','MaxMentionsPerPost','NotificationRetentionDays','DraftRetentionDays','DeletedAttachmentRetentionDays','BackupRetentionCount','DatabaseWarningBytes','DatabaseCriticalBytes'];
+        const arrays = ['ModeratorUserIds','BlockedTerms','AllowedReactions'];
+        page.addEventListener('pageshow', async () => {
+            Dashboard.showLoadingMsg();
+            try {
+                const config = await ApiClient.getPluginConfiguration(pluginId);
+                booleans.forEach(key => page.querySelector('#' + key).checked = !!config[key]);
+                numbers.forEach(key => page.querySelector('#' + key).value = config[key] ?? 0);
+                arrays.forEach(key => page.querySelector('#' + key).value = (config[key] || []).join('\n'));
+            } finally { Dashboard.hideLoadingMsg(); }
+        });
+        page.querySelector('#CommunityConfigurationForm').addEventListener('submit', async event => {
+            event.preventDefault();
+            Dashboard.showLoadingMsg();
+            try {
+                const config = await ApiClient.getPluginConfiguration(pluginId);
+                booleans.forEach(key => config[key] = page.querySelector('#' + key).checked);
+                numbers.forEach(key => config[key] = Number(page.querySelector('#' + key).value));
+                arrays.forEach(key => config[key] = page.querySelector('#' + key).value.split(/\r?\n/).map(x => x.trim()).filter(Boolean));
+                await ApiClient.updatePluginConfiguration(pluginId, config);
+                Dashboard.processPluginConfigurationUpdateResult();
+            } catch (error) {
+                Dashboard.hideLoadingMsg();
+                alert(error.message || String(error));
+            }
+            return false;
+        });
+    })();
+    </script>
+</div>
+</body>
+</html>
