@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.0.0 — 2026-08-08
+
+- Consolidada como versión publicable la integración web reconstruida y validada contra `jellyfin/jellyfin:10.10.7` real.
+- Corregido el solapamiento móvil que podía dejar el título **Comunidad** y el botón **Volver** debajo de la cabecera de Jellyfin Web.
+- Añadida una comprobación E2E específica que exige que Volver, Comunidad, búsqueda y Nuevo tema estén dentro del viewport y no estén tapados por ningún elemento de Jellyfin.
+- La prueba de navegador sigue validando por separado un usuario normal y un administrador, incluida la visibilidad exclusiva de Moderación y Administración.
+- El artefacto de publicación continúa fijado a Jellyfin Server 10.10.7, ABI 10.10.7.0 y .NET 8.
+
 ## 1.1.0.0 — 2026-08-07
 
 - Corregida la integración web de la versión 1.0: `community.html` deja de depender de JavaScript inline y utiliza el ciclo `data-controller` que Jellyfin Web carga oficialmente para páginas de plugins.
@@ -26,4 +34,4 @@
 - Copias consistentes y restauración validada.
 - Compilación Release con analizadores, pruebas y auditoría de dependencias.
 
-> Nota histórica: la integración web de 1.0 mostraba la estructura HTML de Comunidad, pero su JavaScript inline no era ejecutado por el ciclo de vistas de Jellyfin Web 10.10.7. La versión 1.1 sustituye ese diseño y añade pruebas de navegador que reproducen precisamente ese fallo antes de permitir una publicación.
+> Nota histórica: la integración web de 1.0 mostraba la estructura HTML de Comunidad, pero su JavaScript inline no era ejecutado por el ciclo de vistas de Jellyfin Web 10.10.7. Las versiones 1.1 y 1.2 sustituyen ese diseño y mantienen pruebas de navegador que reproducen precisamente ese fallo antes de permitir una publicación.
