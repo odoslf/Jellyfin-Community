@@ -36,11 +36,22 @@ public sealed class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
                 Name = "Community",
                 DisplayName = "Comunidad",
                 EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Web.community.html", ns),
-                EnableInMainMenu = false
+                // Jellyfin 10.10.7 only exposes ConfigurationPages to elevated users.
+                // Keep this enabled as an administrator fallback; ordinary users receive
+                // their menu entry through the web bootstrap injected into index.html.
+                EnableInMainMenu = true,
+                MenuSection = "Comunidad",
+                MenuIcon = "forum"
             },
             new PluginPageInfo
             {
                 Name = "CommunityPageController",
+                EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Web.communityPageController13.js", ns),
+                EnableInMainMenu = false
+            },
+            new PluginPageInfo
+            {
+                Name = "CommunityPageControllerLegacy",
                 EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Web.communityPageController.js", ns),
                 EnableInMainMenu = false
             },
