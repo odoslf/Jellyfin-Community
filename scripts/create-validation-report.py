@@ -85,6 +85,7 @@ def main() -> int:
     runtime_log_path = artifacts / "jellyfin-10.10.7-runtime.log"
     user_screenshot = artifacts / "e2e-user-mobile.png"
     admin_screenshot = artifacts / "e2e-admin-mobile.png"
+    dashboard_screenshot = artifacts / "e2e-admin-dashboard-route.png"
 
     if not package.is_file() or not audit.is_file():
         raise RuntimeError(f"Package or vulnerability audit is missing for Community {VERSION}")
@@ -112,6 +113,9 @@ def main() -> int:
         "menu",
         "createThread",
         "adminPanel",
+        "dashboardFallback",
+        "dashboardCategoryLabels",
+        "dashboardCreateThread",
         "mobileViewport",
         "toolbarVisible",
     )
@@ -130,9 +134,9 @@ def main() -> int:
     if "CommunityPageController13" not in controller or "normalizeCommunityJson" not in controller:
         raise RuntimeError("The real Jellyfin server did not expose the Community 1.3 normalized controller")
 
-    for screenshot in (user_screenshot, admin_screenshot):
+    for screenshot in (user_screenshot, admin_screenshot, dashboard_screenshot):
         if not screenshot.is_file() or screenshot.stat().st_size == 0:
-            raise RuntimeError(f"Mobile browser screenshot is missing: {screenshot}")
+            raise RuntimeError(f"Browser screenshot is missing: {screenshot}")
 
     runtime_log = require_text(runtime_log_path, "Jellyfin runtime log")
     if f"Loaded plugin: Community {VERSION}" not in runtime_log or "Jellyfin Community initialized" not in runtime_log:
@@ -180,12 +184,15 @@ def main() -> int:
 - Inyección registrada durante E2E de API: **{transformed_count} respuestas transformadas**
 - E2E de navegador Chromium sobre Jellyfin Web real: **correcto**
 - Menú `Comunidad` para usuario normal: **verificado en navegador**
-- Creación de conversación desde la interfaz: **verificada en navegador**
+- Creación de conversación desde la navegación normal: **verificada en navegador**
 - Pestañas y panel de administración para administrador: **verificados en navegador**
+- Ruta real `configurationpage?name=Community`: **verificada en navegador**
+- Categorías con nombres y valores válidos en la ruta del panel: **verificadas**
+- Creación de conversación desde la ruta del panel: **verificada**
 - Ocultación de administración/moderación para usuario normal: **verificada en navegador**
 - Barra de Comunidad visible y pulsable: **verificada**
 - Layout móvil 390×844 y 430×932: **verificado sin desbordamiento horizontal**
-- Capturas de evidencia de usuario y administrador: **generadas**
+- Capturas de usuario, administrador y ruta Dashboard: **generadas**
 
 ## Paquete instalable
 
@@ -197,9 +204,11 @@ El paquete no incorpora ensamblados `Jellyfin.*` del servidor, `MediaBrowser.*`,
 
 ## Qué prueba específicamente el E2E 1.3
 
-La validación 1.3 prueba de forma separada los dos fallos que escaparon a 1.2. Primero pide al servidor real su `index.html` y exige que la respuesta contenga el bootstrap de Community y cabeceras anti-caché, por lo que no basta con probar el transformador aislado. Segundo ejecuta un contrato frontend con propiedades PascalCase y camelCase y comprueba en el servidor real que se sirve el controlador 1.3 que realiza esa normalización.
+La validación 1.3 prueba de forma separada los dos fallos que escaparon a 1.2. Primero pide al servidor real su `index.html` y exige que la respuesta contenga el bootstrap de Community y cabeceras anti-caché. Segundo ejecuta un contrato frontend con propiedades PascalCase y camelCase y comprueba en el servidor real que se sirve el controlador 1.3 que realiza esa normalización.
 
-Además, la prueba API configura desde cero Jellyfin 10.10.7, autentica un administrador y un usuario normal, comprueba categorías iniciales, creación y búsqueda de temas, reacciones, seguimiento, respuestas, denuncias, moderación y separación de permisos. La prueba Chromium inicia sesión mediante Jellyfin Web real, abre `Comunidad` desde la navegación de usuario, crea una conversación y comprueba por separado los controles administrativos.
+La prueba Chromium reproduce además las dos rutas de entrada: abre `Comunidad` desde la navegación normal con un usuario ordinario y después, con un administrador, abre la página mediante `Dashboard.getPluginUrl('Community')`, la misma familia de ruta usada al entrar desde el panel/plugin. En esa segunda ruta comprueba que las categorías no estén en blanco y crea una conversación completa.
+
+La prueba API configura desde cero Jellyfin 10.10.7, autentica un administrador y un usuario normal, comprueba categorías iniciales, creación y búsqueda de temas, reacciones, seguimiento, respuestas, denuncias, moderación y separación de permisos.
 
 ## Alcance
 
