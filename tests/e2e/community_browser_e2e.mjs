@@ -63,22 +63,7 @@ async function login(page, credentials) {
     await page.locator('[data-jellyfin-community-menu]').first().waitFor({ state: 'attached', timeout: 30_000 });
 }
 
-async function openCommunity(page) {
-    const communityLink = page.locator('[data-jellyfin-community-menu]').first();
-    const drawerButton = page.locator('.mainDrawerButton:not(.hide)').first();
-    await drawerButton.waitFor({ state: 'visible', timeout: 30_000 });
-    await drawerButton.click();
-    await page.locator('.mainDrawer.drawer-open').waitFor({ state: 'attached', timeout: 30_000 });
-    await page.waitForFunction(() => {
-        const link = document.querySelector('[data-jellyfin-community-menu]');
-        if (!link) return false;
-        const rect = link.getBoundingClientRect();
-        return rect.width > 0 && rect.height > 0
-            && rect.right > 0 && rect.left < window.innerWidth
-            && rect.bottom > 0 && rect.top < window.innerHeight;
-    }, null, { timeout: 30_000 });
-
-    await communityLink.click();
+async function waitForCommunityReady(page) {
     await page.locator('#CommunityPage').waitFor({ state: 'visible', timeout: 30_000 });
     try {
         await page.waitForFunction(() => {
@@ -96,6 +81,55 @@ async function openCommunity(page) {
     }
     await page.locator('#communityMain .community-grid').waitFor({ state: 'visible', timeout: 5_000 });
     await page.locator('.community-category').first().waitFor({ state: 'visible' });
+}
+
+async function openCommunity(page) {
+    const communityLink = page.locator('[data-jellyfin-community-menu]').first();
+    const drawerButton = page.locator('.mainDrawerButton:not(.hide)').first();
+    await drawerButton.waitFor({ state: 'visible', timeout: 30_000 });
+    await drawerButton.click();
+    await page.locator('.mainDrawer.drawer-open').waitFor({ state: 'attached', timeout: 30_000 });
+    await page.waitForFunction(() => {
+        const link = document.querySelector('[data-jellyfin-community-menu]');
+        if (!link) return false;
+        const rect = link.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0
+            && rect.right > 0 && rect.left < window.innerWidth
+            && rect.bottom > 0 && rect.top < window.innerHeight;
+    }, null, { timeout: 30_000 });
+
+    await communityLink.click();
+    await waitForCommunityReady(page);
+}
+
+async function openCommunityFromDashboardConfiguration(page) {
+    await page.evaluate(() => window.JellyfinCommunityBootstrap.closeCommunity());
+    await page.waitForFunction(() => !document.querySelector('#CommunityPage'), null, { timeout: 10_000 });
+    await page.evaluate(() => {
+        window.Dashboard.navigate(window.Dashboard.getPluginUrl('Community'));
+    });
+    await waitForCommunityReady(page);
+
+    const visibleCategoryLabels = await page.locator('.community-category').evaluateAll(elements =>
+        elements.map(element => element.textContent?.trim() || '').filter(Boolean));
+    if (visibleCategoryLabels.length < 2 || !visibleCategoryLabels.some(label => label !== 'Todas')) {
+        throw new Error(`Dashboard Community route rendered blank category labels: ${JSON.stringify(visibleCategoryLabels)}`);
+    }
+
+    await page.locator('#communityNewThread').click();
+    await page.locator('#newThreadForm').waitFor({ state: 'visible' });
+    const categoryOptions = await page.locator('#newCategory option').evaluateAll(options =>
+        options.map(option => ({ value: option.value, text: option.textContent?.trim() || '' })));
+    if (!categoryOptions.length || categoryOptions.some(option => !option.value || !option.text)) {
+        throw new Error(`Dashboard Community route produced invalid category options: ${JSON.stringify(categoryOptions)}`);
+    }
+
+    await page.locator('#newTitle').fill('Community dashboard E2E thread');
+    await page.locator('#newBody').fill('Tema creado desde la ruta de configuración real para reproducir el fallo observado en 1.2.');
+    await page.waitForTimeout(11_000);
+    await page.locator('#newThreadForm button[type="submit"]').click();
+    await page.locator('h2').filter({ hasText: 'Community dashboard E2E thread' }).waitFor({ state: 'visible', timeout: 30_000 });
+    await page.locator('#communityReplyForm').waitFor({ state: 'visible' });
 }
 
 async function assertNoPageOverflow(page) {
@@ -221,6 +255,15 @@ try {
     await adminPage.getByText('community-user', { exact: true }).waitFor({ state: 'visible' });
     await assertNoPageOverflow(adminPage);
     await adminPage.screenshot({ path: 'artifacts/e2e-admin-mobile.png', fullPage: true });
+
+    // Reproduce the exact path that failed in the user's 1.2 screenshots: open the
+    // Community PluginPage through Jellyfin's Dashboard/configuration-page router,
+    // not through the injected normal-user menu. Category names and creation must
+    // work here as well, proving the JSON normalizer is not bootstrap-dependent.
+    await openCommunityFromDashboardConfiguration(adminPage);
+    await assertNoPageOverflow(adminPage);
+    await adminPage.screenshot({ path: 'artifacts/e2e-admin-dashboard-route.png', fullPage: true });
+
     assertAdminNoErrors();
     await adminContext.close();
 
@@ -231,6 +274,9 @@ try {
         menu: true,
         createThread: true,
         adminPanel: true,
+        dashboardFallback: true,
+        dashboardCategoryLabels: true,
+        dashboardCreateThread: true,
         mobileViewport: true,
         toolbarVisible: true,
         horizontalOverflow: false,
