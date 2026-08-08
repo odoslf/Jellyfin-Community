@@ -1,7 +1,7 @@
 ---
 name: "Community"
 guid: "c24c5b8e-2fa8-47f6-a671-a7eb9d60c114"
-version: "1.1.0.0"
+version: "1.2.0.0"
 targetAbi: "10.10.7.0"
 framework: "net8.0"
 overview: "Foro local integrado con los usuarios y bibliotecas de Jellyfin."
@@ -16,6 +16,7 @@ artifacts:
 - "Jellyfin.Plugin.Community.dll"
 - "Markdig.dll"
 changelog: >
-  1.1 corrige la integración web de 1.0: el frontend usa el ciclo de controladores
-  de Jellyfin 10.10.7, añade Comunidad al menú de usuarios, incorpora administración
-  funcional y exige pruebas E2E reales contra Jellyfin 10.10.7 y Chromium.
+  1.2 consolida la integración web validada contra Jellyfin 10.10.7 real,
+  corrige la cabecera móvil para que los controles de Comunidad no queden bajo
+  la navegación de Jellyfin y añade una comprobación E2E que exige que toda la
+  barra del foro sea visible y pulsable tanto para usuarios como administradores.
