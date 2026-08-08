@@ -19,7 +19,7 @@ jobs:
     timeout-minutes: 45
     env:
       DOTNET_NOLOGO: 'true'
-      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
       NUGET_XMLDOC_MODE: skip
       JELLYFIN_URL: http://127.0.0.1:8096
       COMMUNITY_VERSION: 1.2.0.0
