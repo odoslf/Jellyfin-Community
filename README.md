@@ -7,7 +7,7 @@
 
 **Community** añade un foro local a Jellyfin. Reutiliza las cuentas, sesiones y permisos del servidor, respeta la visibilidad de las bibliotecas y guarda sus datos en una base SQLite independiente. No crea usuarios paralelos, no almacena contraseñas y no incorpora telemetría.
 
-> **Línea estable 1.x:** Jellyfin Server **10.10.7**, ABI de catálogo **10.10.7.0**, **.NET 8 (`net8.0`)**. La versión preparada en esta rama es **1.1.0.0**.
+> **Línea estable 1.x:** Jellyfin Server **10.10.7**, ABI de catálogo **10.10.7.0**, **.NET 8 (`net8.0`)**. La versión preparada en esta rama es **1.2.0.0**.
 
 ## Instalación desde Jellyfin
 
@@ -18,18 +18,20 @@ En **Panel de control → Plugins → Repositorios → +** añada:
 
 Guarde el repositorio, abra **Plugins → Catálogo**, seleccione **Community**, instálelo y reinicie Jellyfin cuando se le solicite. Las actualizaciones estables de la línea 1.x se ofrecen desde esa misma URL.
 
-## Qué cambia en 1.1
+## Qué cambia en 1.2
 
-La versión 1.0 podía instalarse y cargar el HTML de Comunidad, pero Jellyfin Web 10.10.7 no ejecutaba el JavaScript inline de esa página. El resultado era una pantalla visible pero sin foro funcional.
+La versión 1.0 podía instalarse y cargar el HTML de Comunidad, pero Jellyfin Web 10.10.7 no ejecutaba el JavaScript inline de esa página. La integración reconstruida en 1.1 solucionó ese problema y la 1.2 añade la última corrección visual detectada en la validación real: en pantallas móviles la cabecera de Jellyfin podía tapar el título y el botón Volver del foro.
 
-La versión 1.1 sustituye esa integración:
+La versión 1.2:
 
-- `community.html` utiliza `data-controller`, el ciclo de carga que Jellyfin Web emplea para controladores de páginas de plugins;
-- un bootstrap versionado del propio plugin añade **Comunidad** al menú de Jellyfin Web para usuarios autenticados;
-- no se modifican físicamente archivos del directorio web de Jellyfin;
+- mantiene el bootstrap versionado del propio plugin que añade **Comunidad** al menú de Jellyfin Web para usuarios autenticados;
+- no modifica físicamente archivos del directorio web de Jellyfin;
 - no requiere Harmony ni File Transformation;
-- usuario normal, moderador y administrador ven únicamente las funciones que les corresponden;
-- el administrador dispone de pestañas de Moderación y Administración dentro de Comunidad.
+- separa las funciones de usuario normal, moderador y administrador;
+- ofrece al administrador las pestañas de Moderación y Administración dentro de Comunidad;
+- reserva correctamente el espacio de la cabecera móvil de Jellyfin Web;
+- bloquea CI si Volver, Comunidad, búsqueda o Nuevo tema quedan fuera del viewport o tapados por otro elemento;
+- ejecuta el paquete final dentro de Jellyfin 10.10.7 real y prueba la interfaz con Chromium antes de publicarlo.
 
 ## Funciones
 
@@ -54,14 +56,14 @@ La versión 1.1 sustituye esa integración:
 | Jellyfin Server | **10.10.7** |
 | ABI de catálogo | **10.10.7.0** |
 | Framework | **.NET 8 / net8.0** |
-| Plugin | **1.1.0.0** |
+| Plugin | **1.2.0.0** |
 | SDK de compilación CI | **8.0.423** |
 
 La línea 1.x permanece deliberadamente fijada a Jellyfin 10.10.7/.NET 8. El soporte para versiones posteriores de Jellyfin que usan otro runtime se publicará como una línea separada; no se reemplazará silenciosamente el artefacto de 10.10.7.
 
 ## Validación de publicación
 
-Desde 1.1 una compilación verde por sí sola **no** es suficiente. El workflow de publicación bloquea el artefacto si falla cualquiera de estas etapas:
+Una compilación verde por sí sola **no** es suficiente. El workflow de publicación bloquea el artefacto si falla cualquiera de estas etapas:
 
 - sintaxis de los recursos web y prohibición de JavaScript inline en la página del foro;
 - compilación Release con advertencias tratadas como errores y analizadores de .NET;
@@ -70,7 +72,7 @@ Desde 1.1 una compilación verde por sí sola **no** es suficiente. El workflow 
 - ZIP reproducible con una lista cerrada de dos archivos;
 - arranque del ZIP final dentro de la imagen oficial `jellyfin/jellyfin:10.10.7`;
 - E2E real de API con administrador y usuario normal;
-- E2E real de Jellyfin Web en Chromium, incluyendo inicio de sesión, menú Comunidad, carga del foro, creación de un tema y panel administrativo;
+- E2E real de Jellyfin Web en Chromium, incluyendo inicio de sesión, menú Comunidad, carga del foro, creación de un tema, controles móviles visibles y panel administrativo;
 - comprobación del registro de runtime para errores emitidos por Community;
 - generación de un informe de validación a partir de las evidencias de esa misma ejecución.
 
@@ -89,7 +91,7 @@ cd Jellyfin-Community
 El paquete se genera en:
 
 ```text
-artifacts/Jellyfin.Plugin.Community_1.1.0.0.zip
+artifacts/Jellyfin.Plugin.Community_1.2.0.0.zip
 ```
 
 Para usuarios finales no es necesario compilar: la versión estable se instala desde el repositorio del catálogo indicado arriba.
