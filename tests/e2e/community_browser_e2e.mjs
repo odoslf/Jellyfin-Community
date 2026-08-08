@@ -98,6 +98,48 @@ async function assertNoPageOverflow(page) {
     }
 }
 
+async function assertCommunityToolbarExposed(page) {
+    const checks = await page.evaluate(() => {
+        const selectors = [
+            '#communityClose',
+            '#CommunityPage .community-toolbar h1',
+            '#communitySearch',
+            '#communitySearchButton',
+            '#communityNewThread'
+        ];
+
+        return selectors.map(selector => {
+            const element = document.querySelector(selector);
+            if (!(element instanceof HTMLElement)) {
+                return { selector, ok: false, reason: 'missing' };
+            }
+
+            const rect = element.getBoundingClientRect();
+            if (rect.width <= 0 || rect.height <= 0
+                || rect.bottom <= 0 || rect.top >= window.innerHeight
+                || rect.right <= 0 || rect.left >= window.innerWidth) {
+                return { selector, ok: false, reason: 'outside viewport', rect: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right } };
+            }
+
+            const x = Math.min(window.innerWidth - 1, Math.max(0, rect.left + rect.width / 2));
+            const y = Math.min(window.innerHeight - 1, Math.max(0, rect.top + rect.height / 2));
+            const topElement = document.elementFromPoint(x, y);
+            const unoccluded = Boolean(topElement && (topElement === element || element.contains(topElement)));
+            return {
+                selector,
+                ok: unoccluded,
+                reason: unoccluded ? 'visible' : `occluded by ${topElement?.tagName || 'nothing'}.${topElement?.className || ''}`,
+                rect: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right }
+            };
+        });
+    });
+
+    const failures = checks.filter(check => !check.ok);
+    if (failures.length) {
+        throw new Error(`Community toolbar is not fully visible and clickable: ${JSON.stringify(failures)}`);
+    }
+}
+
 const browser = await chromium.launch({ headless: true });
 try {
     const userContext = await browser.newContext({
@@ -110,6 +152,7 @@ try {
     const assertUserNoErrors = attachDiagnostics(userPage, 'ordinary-user-mobile');
     await login(userPage, user);
     await openCommunity(userPage);
+    await assertCommunityToolbarExposed(userPage);
 
     await userPage.locator('text=Community E2E thread').first().waitFor({ state: 'visible', timeout: 20_000 });
     await userPage.locator('#communityAdminTab').waitFor({ state: 'attached' });
@@ -144,6 +187,7 @@ try {
     const assertAdminNoErrors = attachDiagnostics(adminPage, 'administrator-mobile');
     await login(adminPage, admin);
     await openCommunity(adminPage);
+    await assertCommunityToolbarExposed(adminPage);
     await adminPage.locator('#communityAdminTab').waitFor({ state: 'visible' });
     await adminPage.locator('#communityModerationTab').waitFor({ state: 'visible' });
     await adminPage.locator('#communityAdminTab').click();
@@ -164,6 +208,7 @@ try {
         createThread: true,
         adminPanel: true,
         mobileViewport: true,
+        toolbarVisible: true,
         horizontalOverflow: false,
     }));
 } finally {
