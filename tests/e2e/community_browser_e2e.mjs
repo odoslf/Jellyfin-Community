@@ -4,6 +4,13 @@ const base = (process.env.JELLYFIN_URL || 'http://127.0.0.1:8096').replace(/\/$/
 const user = { name: 'community-user', password: 'community-user-password' };
 const admin = { name: 'community-admin', password: 'community-admin-password' };
 const KNOWN_JELLYFIN_SCROLL_ERROR = "Failed to execute 'scrollTo' on 'Element': Failed to read the 'behavior' property from 'ScrollOptions': The provided value 'null' is not a valid enum value of type ScrollBehavior.";
+const COMMUNITY_TOOLBAR_SELECTORS = [
+    '#communityClose',
+    '#CommunityPage .community-toolbar h1',
+    '#communitySearch',
+    '#communitySearchButton',
+    '#communityNewThread'
+];
 
 function attachDiagnostics(page, label) {
     const pageErrors = [];
@@ -98,45 +105,62 @@ async function assertNoPageOverflow(page) {
     }
 }
 
-async function assertCommunityToolbarExposed(page) {
-    const checks = await page.evaluate(() => {
-        const selectors = [
-            '#communityClose',
-            '#CommunityPage .community-toolbar h1',
-            '#communitySearch',
-            '#communitySearchButton',
-            '#communityNewThread'
-        ];
+async function getCommunityToolbarChecks(page) {
+    return page.evaluate(selectors => selectors.map(selector => {
+        const element = document.querySelector(selector);
+        if (!(element instanceof HTMLElement)) {
+            return { selector, ok: false, reason: 'missing' };
+        }
 
-        return selectors.map(selector => {
+        const rect = element.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0
+            || rect.bottom <= 0 || rect.top >= window.innerHeight
+            || rect.right <= 0 || rect.left >= window.innerWidth) {
+            return {
+                selector,
+                ok: false,
+                reason: 'outside viewport',
+                rect: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right }
+            };
+        }
+
+        const x = Math.min(window.innerWidth - 1, Math.max(0, rect.left + rect.width / 2));
+        const y = Math.min(window.innerHeight - 1, Math.max(0, rect.top + rect.height / 2));
+        const topElement = document.elementFromPoint(x, y);
+        const unoccluded = Boolean(topElement && (topElement === element || element.contains(topElement)));
+        return {
+            selector,
+            ok: unoccluded,
+            reason: unoccluded ? 'visible' : `occluded by ${topElement?.tagName || 'nothing'}.${topElement?.className || ''}`,
+            rect: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right }
+        };
+    }), COMMUNITY_TOOLBAR_SELECTORS);
+}
+
+async function assertCommunityToolbarExposed(page) {
+    try {
+        await page.waitForFunction(selectors => selectors.every(selector => {
             const element = document.querySelector(selector);
             if (!(element instanceof HTMLElement)) {
-                return { selector, ok: false, reason: 'missing' };
+                return false;
             }
 
             const rect = element.getBoundingClientRect();
             if (rect.width <= 0 || rect.height <= 0
                 || rect.bottom <= 0 || rect.top >= window.innerHeight
                 || rect.right <= 0 || rect.left >= window.innerWidth) {
-                return { selector, ok: false, reason: 'outside viewport', rect: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right } };
+                return false;
             }
 
             const x = Math.min(window.innerWidth - 1, Math.max(0, rect.left + rect.width / 2));
             const y = Math.min(window.innerHeight - 1, Math.max(0, rect.top + rect.height / 2));
             const topElement = document.elementFromPoint(x, y);
-            const unoccluded = Boolean(topElement && (topElement === element || element.contains(topElement)));
-            return {
-                selector,
-                ok: unoccluded,
-                reason: unoccluded ? 'visible' : `occluded by ${topElement?.tagName || 'nothing'}.${topElement?.className || ''}`,
-                rect: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right }
-            };
-        });
-    });
-
-    const failures = checks.filter(check => !check.ok);
-    if (failures.length) {
-        throw new Error(`Community toolbar is not fully visible and clickable: ${JSON.stringify(failures)}`);
+            return Boolean(topElement && (topElement === element || element.contains(topElement)));
+        }), COMMUNITY_TOOLBAR_SELECTORS, { timeout: 5_000, polling: 100 });
+    } catch (error) {
+        const checks = await getCommunityToolbarChecks(page);
+        const failures = checks.filter(check => !check.ok);
+        throw new Error(`Community toolbar did not become fully visible and clickable after Jellyfin's transient navigation finished: ${JSON.stringify(failures)}. ${error.message}`);
     }
 }
 
