@@ -1,7 +1,7 @@
 (() => {
     'use strict';
 
-    const VERSION = '1.1.0.0';
+    const VERSION = '1.2.0.0';
     const MENU_ATTRIBUTE = 'data-jellyfin-community-menu';
     const COMMUNITY_PAGE_ID = 'CommunityPage';
     const API_SEGMENT = '/Community/api/v1/';
