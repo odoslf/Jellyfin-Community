@@ -123,6 +123,27 @@ function getLegacyController() {
     return legacyModulePromise;
 }
 
+function showStartupError(root, error) {
+    const message = String(error?.message || error || 'Error desconocido');
+    const banner = root.querySelector('#communityBanner');
+    const main = root.querySelector('#communityMain');
+
+    if (banner) {
+        banner.replaceChildren();
+        const alert = document.createElement('div');
+        alert.className = 'community-alert community-error';
+        alert.textContent = message;
+        banner.appendChild(alert);
+    }
+    if (main) {
+        main.replaceChildren();
+        const empty = document.createElement('div');
+        empty.className = 'community-empty community-card';
+        empty.textContent = 'Community no pudo iniciarse. Revise el registro del servidor.';
+        main.appendChild(empty);
+    }
+}
+
 export default class CommunityPageController13 {
     constructor(root, routeParams = {}) {
         if (!root || root.dataset.community13Loading === 'true') {
@@ -145,14 +166,7 @@ export default class CommunityPageController13 {
             .catch(error => {
                 root.dataset.community13Loading = 'false';
                 console.error('[Community] No se pudo iniciar la interfaz 1.3.', error);
-                const banner = root.querySelector('#communityBanner');
-                const main = root.querySelector('#communityMain');
-                if (banner) {
-                    banner.innerHTML = `<div class="community-alert community-error">${String(error?.message || error)}</div>`;
-                }
-                if (main) {
-                    main.innerHTML = '<div class="community-empty community-card">Community no pudo iniciarse. Revise el registro del servidor.</div>';
-                }
+                showStartupError(root, error);
             });
     }
 }
