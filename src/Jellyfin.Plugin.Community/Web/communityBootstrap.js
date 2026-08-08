@@ -1,7 +1,7 @@
 (() => {
     'use strict';
 
-    const VERSION = '1.2.0.0';
+    const VERSION = '1.3.0.0';
     const MENU_ATTRIBUTE = 'data-jellyfin-community-menu';
     const COMMUNITY_PAGE_ID = 'CommunityPage';
     const API_SEGMENT = '/Community/api/v1/';
@@ -53,23 +53,27 @@
                 method: request.type || 'GET',
                 headers,
                 body: request.data ?? undefined,
-                credentials: 'same-origin'
+                credentials: 'same-origin',
+                cache: 'no-store'
             });
 
             if (!response.ok) {
+                const text = await response.text().catch(() => '');
                 let message = response.statusText || `HTTP ${response.status}`;
-                try {
-                    const text = await response.text();
-                    if (text) {
-                        const body = JSON.parse(text);
-                        message = body.Message || body.message || message;
+                if (text) {
+                    try {
+                        const body = normalizeCommunityJson(JSON.parse(text));
+                        message = body.message || body.detail || body.title || message;
+                    } catch (_) {
+                        if (text.length <= 500) {
+                            message = text;
+                        }
                     }
-                } catch (_) {
-                    // Keep the HTTP status text when the body is not JSON.
                 }
                 const error = new Error(message);
                 error.status = response.status;
                 error.statusText = response.statusText;
+                error.responseText = text;
                 throw error;
             }
 
@@ -168,7 +172,7 @@
             }
 
             const [pageResponse, controllerModule] = await Promise.all([
-                fetch(getConfigurationResourceUrl('Community'), {
+                fetch(`${getConfigurationResourceUrl('Community')}&v=${encodeURIComponent(VERSION)}`, {
                     headers,
                     credentials: 'same-origin',
                     cache: 'no-store'
@@ -302,7 +306,13 @@
         }, { capture: true });
 
         window.addEventListener('popstate', closeCommunity);
-        window.addEventListener('hashchange', closeCommunity);
+        window.addEventListener('hashchange', event => {
+            if (location.hash === '#/community' || location.hash === '#!/community') {
+                void openCommunity(event);
+                return;
+            }
+            closeCommunity();
+        });
 
         window.JellyfinCommunityBootstrap = Object.freeze({
             version: VERSION,
@@ -311,6 +321,10 @@
             closeCommunity,
             normalizeCommunityJson
         });
+
+        if (location.hash === '#/community' || location.hash === '#!/community') {
+            void openCommunity();
+        }
     }
 
     if (document.readyState === 'loading') {
