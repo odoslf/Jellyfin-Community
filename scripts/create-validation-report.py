@@ -5,11 +5,12 @@ import argparse
 from datetime import datetime, timezone
 import hashlib
 import json
+import os
 from pathlib import Path
 import xml.etree.ElementTree as ET
 import zipfile
 
-VERSION = "1.2.0.0"
+VERSION = os.environ.get("COMMUNITY_VERSION", "1.3.0.0")
 PACKAGE_NAME = f"Jellyfin.Plugin.Community_{VERSION}.zip"
 
 
@@ -55,6 +56,12 @@ def read_json_evidence(path: Path, label: str) -> dict:
     return result
 
 
+def require_text(path: Path, label: str) -> str:
+    if not path.is_file() or path.stat().st_size == 0:
+        raise RuntimeError(f"{label} evidence is missing or empty: {path}")
+    return path.read_text(encoding="utf-8", errors="replace")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Create a CI validation report for Jellyfin Community.")
     parser.add_argument("--root", required=True, type=Path)
@@ -71,12 +78,16 @@ def main() -> int:
     audit = root / "vulnerability-audit.txt"
     api_e2e_path = artifacts / "runtime-api-e2e.json"
     browser_e2e_path = artifacts / "runtime-browser-e2e.txt"
+    json_contract_path = artifacts / "community-json-contract.json"
+    index_headers_path = artifacts / "community-index-headers.txt"
+    index_html_path = artifacts / "community-index.html"
+    controller_path = artifacts / "community-controller-13.js"
     runtime_log_path = artifacts / "jellyfin-10.10.7-runtime.log"
     user_screenshot = artifacts / "e2e-user-mobile.png"
     admin_screenshot = artifacts / "e2e-admin-mobile.png"
 
     if not package.is_file() or not audit.is_file():
-        raise RuntimeError("Package or vulnerability audit is missing")
+        raise RuntimeError(f"Package or vulnerability audit is missing for Community {VERSION}")
 
     tests = parse_test_results(root)
     if tests["failed"] or tests["error"] or tests["timeout"] or tests["aborted"]:
@@ -91,6 +102,10 @@ def main() -> int:
 
     api_e2e = read_json_evidence(api_e2e_path, "Jellyfin API E2E")
     browser_e2e = read_json_evidence(browser_e2e_path, "Jellyfin Web browser E2E")
+    json_contract = read_json_evidence(json_contract_path, "Community JSON contract")
+    if not all(json_contract.get(key) is True for key in ("pascalCaseContract", "camelCaseContract", "emptyArraySafe")):
+        raise RuntimeError(f"Community JSON contract evidence is incomplete: {json_contract}")
+
     required_browser_flags = (
         "ordinaryUser",
         "administrator",
@@ -104,13 +119,22 @@ def main() -> int:
         raise RuntimeError(f"Browser E2E evidence is incomplete: {browser_e2e}")
     if browser_e2e.get("horizontalOverflow") is not False:
         raise RuntimeError(f"Mobile browser E2E detected horizontal overflow: {browser_e2e}")
+
+    index_headers = require_text(index_headers_path, "Jellyfin index headers")
+    index_html = require_text(index_html_path, "Jellyfin transformed index")
+    controller = require_text(controller_path, "Community 1.3 controller")
+    if "data-jellyfin-community-bootstrap" not in index_html or "CommunityBootstrap" not in index_html:
+        raise RuntimeError("The real Jellyfin index response does not contain the Community bootstrap")
+    if "cache-control:" not in index_headers.lower() or "no-cache" not in index_headers.lower():
+        raise RuntimeError("The real Jellyfin index response is missing Community no-cache headers")
+    if "CommunityPageController13" not in controller or "normalizeCommunityJson" not in controller:
+        raise RuntimeError("The real Jellyfin server did not expose the Community 1.3 normalized controller")
+
     for screenshot in (user_screenshot, admin_screenshot):
         if not screenshot.is_file() or screenshot.stat().st_size == 0:
             raise RuntimeError(f"Mobile browser screenshot is missing: {screenshot}")
 
-    if not runtime_log_path.is_file() or runtime_log_path.stat().st_size == 0:
-        raise RuntimeError("Jellyfin runtime log is missing")
-    runtime_log = runtime_log_path.read_text(encoding="utf-8", errors="replace")
+    runtime_log = require_text(runtime_log_path, "Jellyfin runtime log")
     if f"Loaded plugin: Community {VERSION}" not in runtime_log or "Jellyfin Community initialized" not in runtime_log:
         raise RuntimeError("The runtime log does not prove that Community loaded and initialized")
 
@@ -124,6 +148,7 @@ def main() -> int:
         raise RuntimeError(f"Unexpected package contents: {names}")
 
     generated = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    transformed_count = api_e2e.get("webIntegration", {}).get("indexResponsesTransformed", "n/d")
     report = f"""# Informe de validación reproducible — Community {VERSION}
 
 - Fecha UTC: `{generated}`
@@ -148,13 +173,17 @@ def main() -> int:
 - Integridad y lista cerrada del ZIP: **correctas**
 - Arranque del paquete final dentro de Jellyfin Server 10.10.7: **correcto**
 - E2E de API con administrador y usuario normal: **correcto**
-- Inyección del bootstrap de Community en Jellyfin Web: **correcta** (`{api_e2e['webIntegration']['indexResponsesTransformed']}` respuestas transformadas durante la prueba API)
+- Contrato JSON PascalCase/camelCase y arrays vacíos: **correcto**
+- Respuesta real `/web/index.html` con bootstrap de Community: **verificada**
+- Cabeceras anti-caché del `index.html`: **verificadas**
+- Controlador 1.3 servido por Jellyfin con `normalizeCommunityJson`: **verificado**
+- Inyección registrada durante E2E de API: **{transformed_count} respuestas transformadas**
 - E2E de navegador Chromium sobre Jellyfin Web real: **correcto**
 - Menú `Comunidad` para usuario normal: **verificado en navegador**
 - Creación de conversación desde la interfaz: **verificada en navegador**
 - Pestañas y panel de administración para administrador: **verificados en navegador**
 - Ocultación de administración/moderación para usuario normal: **verificada en navegador**
-- Barra de Comunidad visible y pulsable tras cerrar la navegación móvil de Jellyfin: **verificada**
+- Barra de Comunidad visible y pulsable: **verificada**
 - Layout móvil 390×844 y 430×932: **verificado sin desbordamiento horizontal**
 - Capturas de evidencia de usuario y administrador: **generadas**
 
@@ -166,15 +195,15 @@ def main() -> int:
 
 El paquete no incorpora ensamblados `Jellyfin.*` del servidor, `MediaBrowser.*`, `Microsoft.*`, `System.*` ni un runtime `SQLitePCLRaw.*`; evita sustituir dependencias proporcionadas por Jellyfin 10.10.7.
 
-## Qué prueba específicamente el E2E
+## Qué prueba específicamente el E2E 1.3
 
-La prueba API configura desde cero una instancia oficial de Jellyfin 10.10.7, autentica un administrador y un usuario normal, comprueba recursos web, categorías iniciales, creación y búsqueda de temas, reacciones, seguimiento, respuestas, denuncias y resolución por moderación, separación de permisos administrativos y diagnóstico de integración web.
+La validación 1.3 prueba de forma separada los dos fallos que escaparon a 1.2. Primero pide al servidor real su `index.html` y exige que la respuesta contenga el bootstrap de Community y cabeceras anti-caché, por lo que no basta con probar el transformador aislado. Segundo ejecuta un contrato frontend con propiedades PascalCase y camelCase y comprueba en el servidor real que se sirve el controlador 1.3 que realiza esa normalización.
 
-La prueba de navegador inicia sesión mediante la interfaz real de Jellyfin Web con viewports de móvil, abre `Comunidad` desde el menú insertado por el plugin, espera a que terminen las transiciones de navegación propias de Jellyfin, comprueba que la barra principal del foro queda realmente visible y pulsable, comprueba que el usuario normal puede utilizar el foro y crear un tema, y comprueba en otra sesión que el administrador dispone de Moderación y Administración y puede ver usuarios conocidos y el estado de integración web.
+Además, la prueba API configura desde cero Jellyfin 10.10.7, autentica un administrador y un usuario normal, comprueba categorías iniciales, creación y búsqueda de temas, reacciones, seguimiento, respuestas, denuncias, moderación y separación de permisos. La prueba Chromium inicia sesión mediante Jellyfin Web real, abre `Comunidad` desde la navegación de usuario, crea una conversación y comprueba por separado los controles administrativos.
 
-## Alcance de la garantía
+## Alcance
 
-Esta validación sí arranca y utiliza el **paquete final** dentro de una instancia real de Jellyfin Server 10.10.7 y ejecuta su interfaz web con Chromium. Aun así, ninguna suite automatizada puede demostrar ausencia absoluta de defectos en todas las configuraciones, proxies, navegadores o hardware. La comprobación final específica del Synology sigue siendo instalar esta misma compilación, reiniciar Jellyfin y revisar su registro.
+Esta validación arranca y utiliza el **paquete final** dentro de Jellyfin Server 10.10.7 y ejecuta su interfaz con Chromium. No demuestra ausencia absoluta de defectos en todas las combinaciones de proxy, caché, navegador o hardware. La comprobación específica del Synology consiste en instalar exactamente esta compilación, reiniciar Jellyfin y recargar/cerrar y abrir el cliente una vez para que cargue el nuevo documento web.
 """
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(report, encoding="utf-8")
