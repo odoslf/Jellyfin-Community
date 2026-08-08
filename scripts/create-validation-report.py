@@ -9,7 +9,7 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 import zipfile
 
-VERSION = "1.1.0.0"
+VERSION = "1.2.0.0"
 PACKAGE_NAME = f"Jellyfin.Plugin.Community_{VERSION}.zip"
 
 
@@ -98,6 +98,7 @@ def main() -> int:
         "createThread",
         "adminPanel",
         "mobileViewport",
+        "toolbarVisible",
     )
     if not all(browser_e2e.get(key) is True for key in required_browser_flags):
         raise RuntimeError(f"Browser E2E evidence is incomplete: {browser_e2e}")
@@ -153,6 +154,7 @@ def main() -> int:
 - Creación de conversación desde la interfaz: **verificada en navegador**
 - Pestañas y panel de administración para administrador: **verificados en navegador**
 - Ocultación de administración/moderación para usuario normal: **verificada en navegador**
+- Barra de Comunidad visible y pulsable tras cerrar la navegación móvil de Jellyfin: **verificada**
 - Layout móvil 390×844 y 430×932: **verificado sin desbordamiento horizontal**
 - Capturas de evidencia de usuario y administrador: **generadas**
 
@@ -168,7 +170,7 @@ El paquete no incorpora ensamblados `Jellyfin.*` del servidor, `MediaBrowser.*`,
 
 La prueba API configura desde cero una instancia oficial de Jellyfin 10.10.7, autentica un administrador y un usuario normal, comprueba recursos web, categorías iniciales, creación y búsqueda de temas, reacciones, seguimiento, respuestas, denuncias y resolución por moderación, separación de permisos administrativos y diagnóstico de integración web.
 
-La prueba de navegador inicia sesión mediante la interfaz real de Jellyfin Web con viewports de móvil, abre `Comunidad` desde el menú insertado por el plugin, comprueba que el usuario normal puede utilizar el foro y crear un tema, y comprueba en otra sesión que el administrador dispone de Moderación y Administración y puede ver usuarios conocidos y el estado de integración web.
+La prueba de navegador inicia sesión mediante la interfaz real de Jellyfin Web con viewports de móvil, abre `Comunidad` desde el menú insertado por el plugin, espera a que terminen las transiciones de navegación propias de Jellyfin, comprueba que la barra principal del foro queda realmente visible y pulsable, comprueba que el usuario normal puede utilizar el foro y crear un tema, y comprueba en otra sesión que el administrador dispone de Moderación y Administración y puede ver usuarios conocidos y el estado de integración web.
 
 ## Alcance de la garantía
 
