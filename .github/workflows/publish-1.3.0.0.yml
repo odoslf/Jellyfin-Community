@@ -53,6 +53,7 @@ jobs:
           test -f "release-artifact/artifacts/VALIDATION-REPORT.md"
           test -f "release-artifact/artifacts/e2e-user-mobile.png"
           test -f "release-artifact/artifacts/e2e-admin-mobile.png"
+          test -f "release-artifact/artifacts/e2e-admin-dashboard-route.png"
           test -f "release-artifact/artifacts/community-json-contract.json"
           test -f "release-artifact/artifacts/community-index-headers.txt"
           test -f "release-artifact/artifacts/community-index.html"
@@ -87,9 +88,9 @@ jobs:
 
           This release specifically addresses the failures observed on a real Jellyfin installation with 1.2: Community not appearing in the normal user navigation, blank category labels, `Cannot read properties of undefined (reading 'length')`, and thread creation failing with a generic Community error.
 
-          The web integration now serves a transformed physical Jellyfin `index.html` before the static-file `SendFile` path, adds explicit no-cache headers, and injects the Community bootstrap for ordinary users and administrators. The 1.3 controller also normalizes both PascalCase and camelCase Jellyfin/ASP.NET JSON payloads before the UI reads them, including categories, paged results, permissions, threads and administration data. An elevated Jellyfin menu entry remains as an administrator fallback.
+          The web integration now serves a transformed physical Jellyfin `index.html` before the static-file `SendFile` path, adds explicit no-cache headers, and injects the Community bootstrap for ordinary users and administrators. The 1.3 controller normalizes both PascalCase and camelCase Jellyfin/ASP.NET JSON payloads before the UI reads them, including categories, paged results, permissions, threads and administration data. An elevated Jellyfin menu entry remains as an administrator fallback.
 
-          Publication is gated on the exact artifact passing: .NET 8 Release build with warnings as errors, unit tests, dependency vulnerability audit, official Jellyfin 10.10.7 container startup, authenticated API E2E, a direct check that the real server response for `/web/index.html` contains the Community bootstrap and no-cache headers, a PascalCase/camelCase frontend contract test, and Chromium mobile E2E for an ordinary user and an administrator including normal navigation, thread creation and administrator controls.
+          Publication is gated on the exact artifact passing: .NET 8 Release build with warnings as errors, unit tests, dependency vulnerability audit, official Jellyfin 10.10.7 container startup, authenticated API E2E, a direct check that the real server response for `/web/index.html` contains the Community bootstrap and no-cache headers, a PascalCase/camelCase frontend contract test, and Chromium mobile E2E for an ordinary user and an administrator. The browser suite additionally opens Community through Jellyfin's real Dashboard `configurationpage?name=Community` route, verifies non-empty category labels/options and creates a conversation there, reproducing the exact route that failed in 1.2.
 
           This release remains intentionally pinned to Jellyfin 10.10.7 (catalog ABI 10.10.7.0).
           EOF
@@ -102,6 +103,7 @@ jobs:
             "release-artifact/artifacts/community-index-headers.txt" \
             "release-artifact/artifacts/e2e-user-mobile.png" \
             "release-artifact/artifacts/e2e-admin-mobile.png" \
+            "release-artifact/artifacts/e2e-admin-dashboard-route.png" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "Jellyfin Community 1.3.0.0" \
@@ -122,3 +124,4 @@ jobs:
           grep -qx 'community-index-headers.txt' <<< "$ASSETS"
           grep -qx 'e2e-user-mobile.png' <<< "$ASSETS"
           grep -qx 'e2e-admin-mobile.png' <<< "$ASSETS"
+          grep -qx 'e2e-admin-dashboard-route.png' <<< "$ASSETS"
