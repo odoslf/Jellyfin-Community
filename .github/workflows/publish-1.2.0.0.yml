@@ -49,16 +49,16 @@ jobs:
           rm -rf release-artifact
           mkdir -p release-artifact
           gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --name "$ARTIFACT_NAME" --dir release-artifact
-          test -f "release-artifact/$PACKAGE_NAME"
-          test -f "release-artifact/VALIDATION-REPORT.md"
-          test -f "release-artifact/e2e-user-mobile.png"
-          test -f "release-artifact/e2e-admin-mobile.png"
+          test -f "release-artifact/artifacts/$PACKAGE_NAME"
+          test -f "release-artifact/artifacts/VALIDATION-REPORT.md"
+          test -f "release-artifact/artifacts/e2e-user-mobile.png"
+          test -f "release-artifact/artifacts/e2e-admin-mobile.png"
 
       - name: Verify package and generate release checksums
         shell: bash
         run: |
           set -euo pipefail
-          cd release-artifact
+          cd release-artifact/artifacts
           unzip -t "$PACKAGE_NAME"
           test "$(unzip -Z1 "$PACKAGE_NAME" | wc -l)" -eq 2
           unzip -Z1 "$PACKAGE_NAME" | sort | diff -u <(printf '%s\n' 'Jellyfin.Plugin.Community.dll' 'Markdig.dll' | sort) -
@@ -87,12 +87,12 @@ jobs:
           The release remains intentionally pinned to Jellyfin 10.10.7 (catalog ABI 10.10.7.0).
           EOF
           gh release create "$TAG" \
-            "release-artifact/$PACKAGE_NAME" \
-            "release-artifact/$PACKAGE_NAME.md5" \
-            "release-artifact/$PACKAGE_NAME.sha256" \
-            "release-artifact/VALIDATION-REPORT.md" \
-            "release-artifact/e2e-user-mobile.png" \
-            "release-artifact/e2e-admin-mobile.png" \
+            "release-artifact/artifacts/$PACKAGE_NAME" \
+            "release-artifact/artifacts/$PACKAGE_NAME.md5" \
+            "release-artifact/artifacts/$PACKAGE_NAME.sha256" \
+            "release-artifact/artifacts/VALIDATION-REPORT.md" \
+            "release-artifact/artifacts/e2e-user-mobile.png" \
+            "release-artifact/artifacts/e2e-admin-mobile.png" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "Jellyfin Community 1.2.0.0" \
