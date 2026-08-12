@@ -45,7 +45,7 @@ public sealed class CommunityWebConfigTransformerTests
         var links = JsonNode.Parse(transformed)!["menuLinks"]!.AsArray();
 
         Assert.Equal(2, links.Count);
-        Assert.Single(links.Where(link => link?["name"]?.GetValue<string>() == "Foro"));
+        Assert.Single(links, link => link?["name"]?.GetValue<string>() == "Foro");
         Assert.Equal("../Community/app?v=1.5.0.0", links[0]!["url"]!.GetValue<string>());
     }
 
