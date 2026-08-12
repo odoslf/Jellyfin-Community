@@ -159,13 +159,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ -s artifacts/jellyfin-10.10.7-runtime.log ] && grep -E '\[ERR\].*Jellyfin\.Plugin\.Community|Jellyfin\.Plugin\.Community.*\[ERR\]' artifacts/jellyfin-10.10.7-runtime.log; then
-            echo 'Community emitted an error in the real Jellyfin 10.10.7 runtime log.' >&2
-            exit 1
-          fi
-          if [ -s artifacts/jellyfin-10.10.7-runtime.log ]; then
+          if docker inspect jellyfin-community-e2e >/dev/null 2>&1; then
+            if grep -E '\[ERR\].*Jellyfin\.Plugin\.Community|Jellyfin\.Plugin\.Community.*\[ERR\]' artifacts/jellyfin-10.10.7-runtime.log; then
+              echo 'Community emitted an error in the real Jellyfin 10.10.7 runtime log.' >&2
+              exit 1
+            fi
             grep -q 'Loaded plugin: Community 1.5.0.0' artifacts/jellyfin-10.10.7-runtime.log
             grep -q 'Jellyfin Community initialized' artifacts/jellyfin-10.10.7-runtime.log
+          else
+            echo 'Runtime log assertion skipped because the Jellyfin container was not started.'
           fi
 
       - name: Generate evidence-based validation report

@@ -444,13 +444,19 @@ public sealed partial class CommunityService
         {
             // The post is already committed. A secondary notification failure must
             // never make the client retry and create a duplicate conversation/post.
-            _logger.LogWarning(
-                exception,
-                "Community saved post {PostId} in thread {ThreadId}, but mention notifications could not be completed.",
-                postId,
-                threadId);
+            LogMentionNotificationFailure(_logger, exception, postId, threadId);
         }
     }
+
+    [LoggerMessage(
+        EventId = 1201,
+        Level = LogLevel.Warning,
+        Message = "Community saved post {PostId} in thread {ThreadId}, but mention notifications could not be completed.")]
+    private static partial void LogMentionNotificationFailure(
+        ILogger logger,
+        Exception exception,
+        long postId,
+        long threadId);
 
     private async Task NotifyMentionsAsync(
         SqliteConnection connection,
