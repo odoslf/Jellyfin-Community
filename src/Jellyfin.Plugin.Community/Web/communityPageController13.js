@@ -23,6 +23,29 @@ function getResourceUrl(name) {
     return ApiClient.getUrl('web/ConfigurationPage', { name });
 }
 
+function versionedResourceUrl(name) {
+    const value = getResourceUrl(name);
+    try {
+        const url = new URL(value, window.location.href);
+        url.searchParams.set('v', '1.4.0.0');
+        return url.href;
+    } catch (_) {
+        const separator = value.includes('?') ? '&' : '?';
+        return `${value}${separator}v=1.4.0.0`;
+    }
+}
+
+function isCommunityApiUrl(value) {
+    if (typeof value !== 'string' || !value) {
+        return false;
+    }
+    try {
+        return new URL(value, window.location.href).pathname.includes('/Community/api/v1/');
+    } catch (_) {
+        return value.includes('/Community/api/v1/');
+    }
+}
+
 function installCommunityAjaxAdapter() {
     if (!window.ApiClient) {
         throw new Error('La API de Jellyfin todavía no está disponible.');
@@ -33,8 +56,7 @@ function installCommunityAjaxAdapter() {
 
     const originalAjax = ApiClient.ajax.bind(ApiClient);
     ApiClient.ajax = async function communityAwareAjax(request, includeAuthorization) {
-        const isCommunityRequest = typeof request?.url === 'string'
-            && request.url.includes('/Community/api/v1/');
+        const isCommunityRequest = isCommunityApiUrl(request?.url);
         if (!isCommunityRequest) {
             return originalAjax(request, includeAuthorization);
         }
@@ -112,7 +134,7 @@ function installCommunityAjaxAdapter() {
 let legacyModulePromise;
 function getLegacyController() {
     if (!legacyModulePromise) {
-        const url = `${getResourceUrl('CommunityPageControllerLegacy')}&v=1.3.0.0`;
+        const url = versionedResourceUrl('CommunityPageControllerLegacy');
         legacyModulePromise = import(url).then(module => {
             if (typeof module.default !== 'function') {
                 throw new Error('El controlador principal de Community no es válido.');
@@ -171,4 +193,4 @@ export default class CommunityPageController13 {
     }
 }
 
-export { normalizeCommunityJson, installCommunityAjaxAdapter };
+export { normalizeCommunityJson, installCommunityAjaxAdapter, isCommunityApiUrl, versionedResourceUrl };
