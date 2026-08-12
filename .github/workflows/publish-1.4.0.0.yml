@@ -42,6 +42,9 @@ jobs:
           set -euo pipefail
           mkdir release-artifact
           gh run download "${{ github.event.workflow_run.id }}" --repo "$GITHUB_REPOSITORY" --name "$ARTIFACT" --dir release-artifact
+          if [ -d release-artifact/artifacts ]; then
+            cp -a release-artifact/artifacts/. release-artifact/
+          fi
           test -f "release-artifact/$PACKAGE"
           unzip -t "release-artifact/$PACKAGE"
           test "$(unzip -Z1 "release-artifact/$PACKAGE" | wc -l)" -eq 2
