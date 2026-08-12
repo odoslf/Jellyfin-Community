@@ -7,7 +7,7 @@
 
 **Community** añade un foro local a Jellyfin. Reutiliza las cuentas, sesiones y permisos del servidor y guarda sus datos en una base SQLite independiente. No crea usuarios paralelos, no almacena contraseñas y no incorpora telemetría.
 
-> **Línea estable 1.x:** Jellyfin Server **10.10.7**, ABI de catálogo **10.10.7.0**, **.NET 8 (`net8.0`)**. La versión de esta rama es **1.3.0.0**.
+> **Línea estable 1.x:** Jellyfin Server **10.10.7**, ABI de catálogo **10.10.7.0**, **.NET 8 (`net8.0`)**. La versión de esta rama es **1.4.0.0**.
 
 ## Instalación desde Jellyfin
 
@@ -18,7 +18,13 @@ En **Panel de control → Plugins → Repositorios → +** añada:
 
 Guarde el repositorio, abra **Plugins → Catálogo**, seleccione **Community**, instálelo y reinicie Jellyfin cuando se le solicite. Después de actualizar el plugin, cierre y vuelva a abrir una vez la aplicación Jellyfin o recargue completamente Jellyfin Web para que el cliente cargue el nuevo `index.html` y el bootstrap de Community.
 
-## Qué corrige 1.3
+## Qué añade 1.4
+
+Community 1.4 utiliza exclusivamente la URL de la sesión Jellyfin activa mediante `ApiClient.getUrl(...)`. No contiene ni solicita una IP, dominio o puerto propio. Por tanto, un usuario conectado mediante un dominio con proxy inverso utiliza automáticamente ese mismo dominio; otro conectado por LAN utiliza automáticamente la dirección LAN guardada en Jellyfin.
+
+La resolución de API y recursos se prueba también con Jellyfin publicado bajo una subruta como `https://servidor.example/jellyfin/`. El plugin no necesita conocer el destino interno del proxy y no debe exponerse con un puerto independiente.
+
+## Correcciones conservadas de 1.3
 
 La 1.3 está orientada específicamente a los fallos observados en una instalación real de Jellyfin 10.10.7 con la 1.2:
 
@@ -63,7 +69,7 @@ Community no contiene ni necesita conocer su dominio público. Las llamadas se c
 | Jellyfin Server | **10.10.7** |
 | ABI de catálogo | **10.10.7.0** |
 | Framework | **.NET 8 / net8.0** |
-| Plugin | **1.3.0.0** |
+| Plugin | **1.4.0.0** |
 | SDK de compilación CI | **8.0.423** |
 
 La línea 1.x permanece deliberadamente fijada a Jellyfin 10.10.7/.NET 8. El soporte para versiones posteriores de Jellyfin que usen otro runtime se publicará como una línea separada y no sustituirá silenciosamente este artefacto.
@@ -103,7 +109,7 @@ cd Jellyfin-Community
 El paquete de esta versión se genera en:
 
 ```text
-artifacts/Jellyfin.Plugin.Community_1.3.0.0.zip
+artifacts/Jellyfin.Plugin.Community_1.4.0.0.zip
 ```
 
 ## Estructura
