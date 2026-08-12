@@ -10,7 +10,7 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 import zipfile
 
-VERSION = os.environ.get("COMMUNITY_VERSION", "1.3.0.0")
+VERSION = os.environ.get("COMMUNITY_VERSION", "1.4.0.0")
 PACKAGE_NAME = f"Jellyfin.Plugin.Community_{VERSION}.zip"
 
 
@@ -104,7 +104,7 @@ def main() -> int:
     api_e2e = read_json_evidence(api_e2e_path, "Jellyfin API E2E")
     browser_e2e = read_json_evidence(browser_e2e_path, "Jellyfin Web browser E2E")
     json_contract = read_json_evidence(json_contract_path, "Community JSON contract")
-    if not all(json_contract.get(key) is True for key in ("pascalCaseContract", "camelCaseContract", "emptyArraySafe")):
+    if not all(json_contract.get(key) is True for key in ("pascalCaseContract", "camelCaseContract", "emptyArraySafe", "reverseProxySubpath", "automaticServerUrl")):
         raise RuntimeError(f"Community JSON contract evidence is incomplete: {json_contract}")
 
     required_browser_flags = (
