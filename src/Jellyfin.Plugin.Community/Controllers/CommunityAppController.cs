@@ -16,7 +16,6 @@ public sealed class CommunityAppController : ControllerBase
     private static readonly byte[] BootstrapJavaScript = ReadResource("Web.communityBootstrap.js");
 
     [HttpGet("app")]
-    [HttpGet("app/")]
     public IActionResult GetApp()
     {
         SetNoCacheHeaders();
