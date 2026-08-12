@@ -1,7 +1,7 @@
 (() => {
     'use strict';
 
-    const VERSION = '1.3.0.0';
+    const VERSION = '1.4.0.0';
     const MENU_ATTRIBUTE = 'data-jellyfin-community-menu';
     const COMMUNITY_PAGE_ID = 'CommunityPage';
     const API_SEGMENT = '/Community/api/v1/';
@@ -27,6 +27,29 @@
         return normalized;
     }
 
+    function isCommunityApiUrl(value) {
+        if (typeof value !== 'string' || !value) {
+            return false;
+        }
+        try {
+            return new URL(value, window.location.href).pathname.includes(API_SEGMENT);
+        } catch (_) {
+            return value.includes(API_SEGMENT);
+        }
+    }
+
+    function versionedResourceUrl(name) {
+        const value = getConfigurationResourceUrl(name);
+        try {
+            const url = new URL(value, window.location.href);
+            url.searchParams.set('v', VERSION);
+            return url.href;
+        } catch (_) {
+            const separator = value.includes('?') ? '&' : '?';
+            return `${value}${separator}v=${encodeURIComponent(VERSION)}`;
+        }
+    }
+
     function installCommunityAjaxAdapter() {
         if (!window.ApiClient || ApiClient.__communityAjaxAdapterInstalled) {
             return Boolean(window.ApiClient?.__communityAjaxAdapterInstalled);
@@ -34,7 +57,7 @@
 
         const originalAjax = ApiClient.ajax.bind(ApiClient);
         ApiClient.ajax = async function communityAwareAjax(request, includeAuthorization) {
-            if (!request?.url || !request.url.includes(API_SEGMENT)) {
+            if (!isCommunityApiUrl(request?.url)) {
                 return originalAjax(request, includeAuthorization);
             }
 
@@ -172,12 +195,12 @@
             }
 
             const [pageResponse, controllerModule] = await Promise.all([
-                fetch(`${getConfigurationResourceUrl('Community')}&v=${encodeURIComponent(VERSION)}`, {
+                fetch(versionedResourceUrl('Community'), {
                     headers,
                     credentials: 'same-origin',
                     cache: 'no-store'
                 }),
-                import(`${getConfigurationResourceUrl('CommunityPageController')}&v=${encodeURIComponent(VERSION)}`)
+                import(versionedResourceUrl('CommunityPageController'))
             ]);
 
             if (!pageResponse.ok) {
@@ -319,7 +342,9 @@
             ensureMenuLinks,
             openCommunity,
             closeCommunity,
-            normalizeCommunityJson
+            normalizeCommunityJson,
+            isCommunityApiUrl,
+            versionedResourceUrl
         });
 
         if (location.hash === '#/community' || location.hash === '#!/community') {
