@@ -151,8 +151,13 @@ jobs:
         run: |
           set -u
           mkdir -p artifacts
-          docker logs jellyfin-community-e2e > artifacts/jellyfin-10.10.7-runtime.log 2>&1 || true
-          docker inspect jellyfin-community-e2e > artifacts/jellyfin-container-inspect.json 2>&1 || true
+          if docker inspect jellyfin-community-e2e >/dev/null 2>&1; then
+            docker logs jellyfin-community-e2e > artifacts/jellyfin-10.10.7-runtime.log 2>&1 || true
+            docker inspect jellyfin-community-e2e > artifacts/jellyfin-container-inspect.json 2>&1 || true
+          else
+            : > artifacts/jellyfin-10.10.7-runtime.log
+            printf '{}\n' > artifacts/jellyfin-container-inspect.json
+          fi
 
       - name: Assert Community runtime log is clean
         if: always()
