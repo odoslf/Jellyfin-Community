@@ -272,6 +272,8 @@ public sealed class CommunityController : ControllerBase
             version,
             _webIntegration.IndexRequestsSeen,
             _webIntegration.IndexResponsesTransformed,
+            _webIntegration.ConfigRequestsSeen,
+            _webIntegration.ConfigResponsesTransformed,
             _webIntegration.LastInjectionUtc,
             _webIntegration.LastError));
     }

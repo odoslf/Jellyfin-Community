@@ -8,9 +8,9 @@
     <LangVersion>latest</LangVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
-    <Version>1.4.0.0</Version>
-    <AssemblyVersion>1.4.0.0</AssemblyVersion>
-    <FileVersion>1.4.0.0</FileVersion>
+    <Version>1.5.0.0</Version>
+    <AssemblyVersion>1.5.0.0</AssemblyVersion>
+    <FileVersion>1.5.0.0</FileVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
@@ -28,9 +28,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Configuration/configPage.html" />
-    <EmbeddedResource Include="Web/community.html" />
-    <EmbeddedResource Include="Web/communityPageController.js" />
-    <EmbeddedResource Include="Web/communityPageController13.js" />
+    <EmbeddedResource Include="Web/communityForum15.html" />
+    <EmbeddedResource Include="Web/communityForum15.css" />
+    <EmbeddedResource Include="Web/communityForum15.js" />
     <EmbeddedResource Include="Web/communityBootstrap.js" />
   </ItemGroup>
 </Project>

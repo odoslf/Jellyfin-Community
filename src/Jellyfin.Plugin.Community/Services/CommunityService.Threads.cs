@@ -247,7 +247,7 @@ public sealed partial class CommunityService
         await IndexThreadAsync(connection, (SqliteTransaction)transaction, threadId, request.Title, request.Body, user.Username, cancellationToken).ConfigureAwait(false);
         await AuditAsync(connection, (SqliteTransaction)transaction, user, "thread.create", "thread", threadId.ToString(System.Globalization.CultureInfo.InvariantCulture), null, null, JsonSerializer.Serialize(request), cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        await NotifyMentionsAsync(connection, null, user, request.Body, threadId, postId, request.Title, cancellationToken).ConfigureAwait(false);
+        await NotifyMentionsBestEffortAsync(connection, user, request.Body, threadId, postId, request.Title, cancellationToken).ConfigureAwait(false);
         return await GetThreadAsync(user, threadId, false, cancellationToken).ConfigureAwait(false);
     }
 

@@ -5,6 +5,7 @@ using Jellyfin.Plugin.Community.Domain;
 using Jellyfin.Plugin.Community.Infrastructure;
 using MediaBrowser.Controller.Library;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.Community.Services;
 
@@ -19,6 +20,7 @@ public sealed partial class CommunityService
     private readonly BackupService _backups;
     private readonly IUserDataManager _userDataManager;
     private readonly ILibraryManager _libraryManager;
+    private readonly ILogger<CommunityService> _logger;
 
     public CommunityService(
         CommunityDatabase database,
@@ -29,7 +31,8 @@ public sealed partial class CommunityService
         AttachmentService attachments,
         BackupService backups,
         IUserDataManager userDataManager,
-        ILibraryManager libraryManager)
+        ILibraryManager libraryManager,
+        ILogger<CommunityService> logger)
     {
         _database = database;
         _permissions = permissions;
@@ -40,6 +43,7 @@ public sealed partial class CommunityService
         _backups = backups;
         _userDataManager = userDataManager;
         _libraryManager = libraryManager;
+        _logger = logger;
     }
 
     public async Task<IReadOnlyList<CategoryDto>> GetCategoriesAsync(CommunityUserContext user, CancellationToken cancellationToken)

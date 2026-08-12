@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Jellyfin.Plugin.Community.Domain;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.Community.Services;
 
@@ -104,7 +105,7 @@ public sealed partial class CommunityService
         await NotifyThreadParticipantsAsync(connection, (SqliteTransaction)transaction, user, thread, postId, request, cancellationToken).ConfigureAwait(false);
         await AuditAsync(connection, (SqliteTransaction)transaction, user, "post.create", "post", postId.ToString(System.Globalization.CultureInfo.InvariantCulture), null, null, null, cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        await NotifyMentionsAsync(connection, null, user, request.Body, threadId, postId, thread.Title, cancellationToken).ConfigureAwait(false);
+        await NotifyMentionsBestEffortAsync(connection, user, request.Body, threadId, postId, thread.Title, cancellationToken).ConfigureAwait(false);
         return await GetPostAsync(connection, user, postId, cancellationToken).ConfigureAwait(false);
     }
 
@@ -157,7 +158,7 @@ public sealed partial class CommunityService
 
         await AuditAsync(connection, (SqliteTransaction)transaction, user, "post.update", "post", postId.ToString(System.Globalization.CultureInfo.InvariantCulture), request.EditReason, JsonSerializer.Serialize(before), null, cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        await NotifyMentionsAsync(connection, null, user, request.Body, before.ThreadId, postId, "Edited post", cancellationToken).ConfigureAwait(false);
+        await NotifyMentionsBestEffortAsync(connection, user, request.Body, before.ThreadId, postId, "Edited post", cancellationToken).ConfigureAwait(false);
         return await GetPostAsync(connection, user, postId, cancellationToken).ConfigureAwait(false);
     }
 
@@ -421,6 +422,41 @@ public sealed partial class CommunityService
             await _notifications.CreateAsync(connection, transaction, recipient, type, thread.Title, $"{author.Username} added a reply.", thread.Id, postId, cancellationToken).ConfigureAwait(false);
         }
     }
+
+    private async Task NotifyMentionsBestEffortAsync(
+        SqliteConnection connection,
+        CommunityUserContext author,
+        string body,
+        long threadId,
+        long postId,
+        string threadTitle,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await NotifyMentionsAsync(connection, null, author, body, threadId, postId, threadTitle, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            // The post is already committed. A secondary notification failure must
+            // never make the client retry and create a duplicate conversation/post.
+            LogMentionNotificationFailure(_logger, exception, postId, threadId);
+        }
+    }
+
+    [LoggerMessage(
+        EventId = 1201,
+        Level = LogLevel.Warning,
+        Message = "Community saved post {PostId} in thread {ThreadId}, but mention notifications could not be completed.")]
+    private static partial void LogMentionNotificationFailure(
+        ILogger logger,
+        Exception exception,
+        long postId,
+        long threadId);
 
     private async Task NotifyMentionsAsync(
         SqliteConnection connection,

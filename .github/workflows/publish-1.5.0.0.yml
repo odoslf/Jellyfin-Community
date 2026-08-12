@@ -1,7 +1,10 @@
-name: Publish Community 1.4.0.0
+name: Publish Community 1.5.0.0
 
 on:
-  workflow_dispatch:
+  workflow_run:
+    workflows: ["Build, validate and run Jellyfin 10.10.7 E2E"]
+    types: [completed]
+    branches: [main]
 
 permissions:
   actions: read
@@ -13,27 +16,31 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
-      VERSION: 1.4.0.0
-      TAG: v1.4.0.0
-      PACKAGE: Jellyfin.Plugin.Community_1.4.0.0.zip
-      ARTIFACT: Jellyfin.Plugin.Community-1.4.0.0-net8-validated
+      VERSION: 1.5.0.0
+      TAG: v1.5.0.0
+      PACKAGE: Jellyfin.Plugin.Community_1.5.0.0.zip
+      ARTIFACT: Jellyfin.Plugin.Community-1.5.0.0-net8-validated
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
 
-      - name: Refuse unvalidated or duplicate publication
+      - name: Confirm validated commit and publication state
+        id: guard
         shell: bash
         run: |
           set -euo pipefail
           test "${{ github.event.workflow_run.head_sha }}" = "$(git rev-parse HEAD)"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "$TAG is already published."
-            exit 0
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "$TAG is already published; no release assets or catalog data will be changed."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Download and verify exact validated package
+        if: steps.guard.outputs.exists != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -43,6 +50,13 @@ jobs:
             cp -a release-artifact/artifacts/. release-artifact/
           fi
           test -f "release-artifact/$PACKAGE"
+          test -f release-artifact/VALIDATION-REPORT.md
+          test -f release-artifact/runtime-api-e2e.json
+          test -f release-artifact/runtime-browser-e2e.txt
+          test -f release-artifact/community-web-config.json
+          test -f release-artifact/e2e-user-mobile.png
+          test -f release-artifact/e2e-admin-mobile.png
+          test -f release-artifact/e2e-admin-settings.png
           unzip -t "release-artifact/$PACKAGE"
           test "$(unzip -Z1 "release-artifact/$PACKAGE" | wc -l)" -eq 2
           unzip -Z1 "release-artifact/$PACKAGE" | sort | diff -u <(printf '%s\n' 'Jellyfin.Plugin.Community.dll' 'Markdig.dll' | sort) -
@@ -51,12 +65,28 @@ jobs:
           md5sum "$PACKAGE" > "$PACKAGE.md5"
 
       - name: Create immutable GitHub release
+        if: steps.guard.outputs.exists != 'true'
         shell: bash
         run: |
           set -euo pipefail
-          gh release create "$TAG"             "release-artifact/$PACKAGE"             "release-artifact/$PACKAGE.md5"             "release-artifact/$PACKAGE.sha256"             "release-artifact/VALIDATION-REPORT.md"             "release-artifact/community-json-contract.json"             "release-artifact/e2e-user-mobile.png"             "release-artifact/e2e-admin-mobile.png"             --repo "$GITHUB_REPOSITORY"             --target "${{ github.event.workflow_run.head_sha }}"             --title "Jellyfin Community 1.4.0.0"             --notes "Community 1.4.0.0 for Jellyfin 10.10.7 / .NET 8. Uses the active Jellyfin session URL automatically behind reverse proxies and subpaths; users never configure a Community IP, domain, or port. Published only from the package that passed the complete API and Chromium E2E workflow."
+          gh release create "$TAG" \
+            "release-artifact/$PACKAGE" \
+            "release-artifact/$PACKAGE.md5" \
+            "release-artifact/$PACKAGE.sha256" \
+            "release-artifact/VALIDATION-REPORT.md" \
+            "release-artifact/runtime-api-e2e.json" \
+            "release-artifact/runtime-browser-e2e.txt" \
+            "release-artifact/community-web-config.json" \
+            "release-artifact/e2e-user-mobile.png" \
+            "release-artifact/e2e-admin-mobile.png" \
+            "release-artifact/e2e-admin-settings.png" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "${{ github.event.workflow_run.head_sha }}" \
+            --title "Jellyfin Community 1.5.0.0" \
+            --notes "Community 1.5.0.0 para Jellyfin 10.10.7 / .NET 8. Añade Foro al menuLinks oficial, abre una aplicación independiente para usuarios normales dentro del WebView Android, detecta automáticamente la sesión sin pedir IP, usa selectores HTML nativos, separa administración y muestra errores correlacionables. Publicado únicamente desde el ZIP que superó API y Chromium E2E."
 
       - name: Add validated release to Jellyfin catalog
+        if: steps.guard.outputs.exists != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -71,7 +101,7 @@ jobs:
           package = Path("release-artifact") / os.environ["PACKAGE"]
           versions.insert(0, {
               "version": os.environ["VERSION"],
-              "changelog": "URL automática desde la sesión Jellyfin activa, compatible con proxy inverso y subrutas; no requiere configurar IP, dominio ni puerto. Conserva las correcciones funcionales de 1.3.",
+              "changelog": "Foro en menuLinks para usuarios normales, aplicación independiente compatible con WebView Android, sesión automática sin IP, controles nativos, administración separada y errores con referencia.",
               "targetAbi": "10.10.7.0",
               "sourceUrl": f"https://github.com/{os.environ['GITHUB_REPOSITORY']}/releases/download/{os.environ['TAG']}/{os.environ['PACKAGE']}",
               "checksum": hashlib.md5(package.read_bytes()).hexdigest().upper(),
@@ -83,5 +113,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add manifest.json
-          git diff --cached --quiet || git commit -m "release: publish Community 1.4.0.0 in Jellyfin catalog"
+          git diff --cached --quiet || git commit -m "release: publish Community 1.5.0.0 in Jellyfin catalog"
           git push origin HEAD:main

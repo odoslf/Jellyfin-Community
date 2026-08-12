@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="color-scheme" content="dark light">
+    <meta name="theme-color" content="#101010">
+    <title>Foro · Jellyfin</title>
+    <link rel="stylesheet" href="./assets/communityForum15.css?v=1.5.0.0">
+</head>
+<body>
+    <a class="skip-link" href="#forumMain">Saltar al foro</a>
+    <header class="forum-header">
+        <a id="backToJellyfin" class="button button-secondary" href="../web/">← Jellyfin</a>
+        <div class="forum-brand">
+            <span class="material-symbol" aria-hidden="true">💬</span>
+            <div><h1>Foro</h1><p>Comunidad del servidor</p></div>
+        </div>
+        <div id="currentUser" class="current-user" aria-live="polite"></div>
+    </header>
+
+    <main id="forumMain" class="forum-shell">
+        <section class="forum-toolbar" aria-label="Herramientas del foro">
+            <form id="searchForm" class="search-form" role="search">
+                <label class="sr-only" for="forumSearch">Buscar conversaciones</label>
+                <input id="forumSearch" type="search" autocomplete="off" placeholder="Buscar conversaciones">
+                <button class="button button-secondary" type="submit">Buscar</button>
+            </form>
+            <button id="newThreadButton" class="button button-primary" type="button">Nuevo tema</button>
+        </section>
+
+        <div id="forumBanner" class="banner" hidden role="alert" aria-live="assertive"></div>
+
+        <nav id="forumTabs" class="tabs" aria-label="Secciones del foro">
+            <button class="tab active" type="button" data-view="threads">Actividad</button>
+            <button class="tab" type="button" data-view="followed">Siguiendo</button>
+            <button class="tab" type="button" data-view="notifications">Notificaciones</button>
+            <button id="moderationTab" class="tab" type="button" data-view="moderation" hidden>Moderación</button>
+            <button id="adminTab" class="tab" type="button" data-view="admin" hidden>Administración</button>
+        </nav>
+
+        <div id="forumContent" aria-live="polite">
+            <div class="loading-card">Cargando el foro…</div>
+        </div>
+    </main>
+
+    <div id="forumModal" class="modal" hidden>
+        <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <button id="modalClose" class="dialog-close" type="button" aria-label="Cerrar">×</button>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <div id="busyIndicator" class="busy" hidden role="status" aria-live="polite">
+        <span class="spinner" aria-hidden="true"></span><span>Procesando…</span>
+    </div>
+    <script src="./assets/communityForum15.js?v=1.5.0.0" defer></script>
+</body>
+</html>

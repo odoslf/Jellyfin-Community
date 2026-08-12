@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.5.0.0 — 2026-08-12
+
+- Sustituida la interfaz heredada por una aplicación de Foro independiente en `/Community/app`; no reutiliza controladores 1.3/1.4 ni páginas de configuración como interfaz de usuario.
+- Añadida una entrada **Foro** al `menuLinks` oficial de Jellyfin Web, disponible para usuarios normales junto a la navegación de bibliotecas.
+- Añadido bootstrap 1.5 aislado de caché que mantiene el enlace dentro del WebView de Android (`target=_self`) y aporta una entrada de reserva sin duplicarla.
+- Eliminada toda configuración manual de IP, dominio o puerto: la app selecciona automáticamente la sesión guardada por Jellyfin para el origen y la subruta actuales.
+- Sustituidos `emby-select` y otros elementos personalizados en formularios dinámicos por controles HTML nativos, corrigiendo las categorías vacías observadas en Android.
+- Separadas las vistas de usuario, moderación, administración y ajustes del plugin; un usuario normal no depende del panel de control.
+- Los errores del API incluyen código, estado y referencia de solicitud; los errores 500 se correlacionan con el registro sin exponer detalles internos.
+- Un fallo al enviar menciones después de confirmar una transacción ya no devuelve error sobre un tema o respuesta que sí se guardó.
+- Añadidas pruebas del `config.json` transformado, `/Community/app`, sesión automática, selector nativo, mismo WebView, creación de temas, panel administrativo y conservación de datos desde 1.4.
+- Se mantienen Jellyfin Server 10.10.7, ABI 10.10.7.0 y .NET 8.
+
 ## 1.4.0.0 — 2026-08-12
 
 - Confirmado y reforzado el uso automático del servidor Jellyfin activo: Community no configura, pide ni persiste IP, dominio o puerto propios.

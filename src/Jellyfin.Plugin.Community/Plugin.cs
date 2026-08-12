@@ -1,6 +1,5 @@
 using System.Globalization;
 using Jellyfin.Plugin.Community.Configuration;
-using Jellyfin.Plugin.Community.WebIntegration;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
@@ -33,40 +32,12 @@ public sealed class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         [
             new PluginPageInfo
             {
-                Name = "Community",
-                DisplayName = "Comunidad",
-                EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Web.community.html", ns),
-                // Jellyfin 10.10.7 only exposes ConfigurationPages to elevated users.
-                // Keep this enabled as an administrator fallback; ordinary users receive
-                // their menu entry through the web bootstrap injected into index.html.
-                EnableInMainMenu = true,
-                MenuSection = "Comunidad",
-                MenuIcon = "forum"
-            },
-            new PluginPageInfo
-            {
-                Name = "CommunityPageController",
-                EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Web.communityPageController13.js", ns),
-                EnableInMainMenu = false
-            },
-            new PluginPageInfo
-            {
-                Name = "CommunityPageControllerLegacy",
-                EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Web.communityPageController.js", ns),
-                EnableInMainMenu = false
-            },
-            new PluginPageInfo
-            {
-                Name = CommunityIndexHtmlTransformer.BootstrapPageName,
-                EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Web.communityBootstrap.js", ns),
-                EnableInMainMenu = false
-            },
-            new PluginPageInfo
-            {
                 Name = "CommunityConfiguration",
                 DisplayName = "Community",
                 EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Configuration.configPage.html", ns),
-                EnableInMainMenu = false
+                EnableInMainMenu = true,
+                MenuSection = "Comunidad",
+                MenuIcon = "forum"
             }
         ];
     }
