@@ -36,6 +36,10 @@ async function login(page, credentials) {
     await page.locator('.manualLoginForm button[type="submit"]').click();
     await page.waitForFunction(() => typeof window.ApiClient?.accessToken === 'function' && Boolean(window.ApiClient.accessToken()), null, { timeout: 30_000 });
     await page.waitForFunction(() => Boolean(window.JellyfinCommunityBootstrap?.VERSION === '1.5.0.0'), null, { timeout: 30_000 });
+    // Authentication completes before Jellyfin's own post-login navigation has
+    // necessarily settled.  Waiting for the normal shell prevents that pending
+    // navigation from racing (and replacing) a subsequent plugin route.
+    await page.locator('.mainDrawerButton:not(.hide)').first().waitFor({ state: 'visible', timeout: 30_000 });
 }
 
 async function openForumFromNormalMenu(page) {
@@ -136,7 +140,7 @@ async function runAdministratorSettings(browser) {
         const assertNoErrors = attachDiagnostics(page, 'administrator-settings');
         await login(page, admin);
         await page.evaluate(() => window.Dashboard.navigate(window.Dashboard.getPluginUrl('CommunityConfiguration')));
-        await page.waitForFunction(() => location.href.includes('name=CommunityConfiguration'), null, { timeout: 30_000 });
+        await page.waitForURL(url => url.href.includes('name=CommunityConfiguration'), { timeout: 30_000 });
         await page.locator('#CommunityConfigurationForm').waitFor({ state: 'visible', timeout: 30_000 });
         await page.getByText('Activar Community', { exact: true }).waitFor({ state: 'visible', timeout: 10_000 });
         await page.screenshot({ path: 'artifacts/e2e-admin-settings.png', fullPage: true });
