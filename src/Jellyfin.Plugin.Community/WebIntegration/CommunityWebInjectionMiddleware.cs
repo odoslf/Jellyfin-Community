@@ -102,7 +102,7 @@ public sealed partial class CommunityWebInjectionMiddleware
         }
 
         var lastWriteUtc = File.GetLastWriteTimeUtc(indexPath);
-        var version = typeof(Plugin).Assembly.GetName().Version ?? new Version(1, 3, 0, 0);
+        var version = typeof(Plugin).Assembly.GetName().Version ?? new Version(1, 4, 0, 0);
 
         var cached = _cachedIndex;
         if (cached is not null
