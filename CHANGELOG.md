@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.0.0 — 2026-08-12
+
+- Confirmado y reforzado el uso automático del servidor Jellyfin activo: Community no configura, pide ni persiste IP, dominio o puerto propios.
+- Corregido el versionado de recursos para no asumir que la URL devuelta por Jellyfin ya contiene parámetros de consulta.
+- Añadida validación de URLs absolutas y relativas cuando Jellyfin está publicado por proxy inverso bajo una subruta como `/jellyfin`.
+- Conservadas las sesiones y cabeceras de autenticación de Jellyfin tanto desde el dominio público como desde el acceso LAN.
+- Se mantienen Jellyfin Server 10.10.7, ABI 10.10.7.0 y .NET 8.
+
 ## 1.3.0.0 — 2026-08-08
 
 - Corregida la ausencia de **Comunidad** en la navegación normal observada en instalaciones reales de Jellyfin 10.10.7: la respuesta de `index.html` se transforma y sirve antes del middleware de archivos estáticos, evitando que rutas `SendFile` o cachés de cliente dejen fuera el bootstrap.
