@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 
+globalThis.window = {
+    location: { href: 'https://media.example.test/jellyfin/web/index.html' },
+    Dashboard: {
+        getConfigurationResourceUrl: name => `https://media.example.test/jellyfin/web/ConfigurationPage?name=${name}`
+    }
+};
+
 const sourcePath = new URL('../../src/Jellyfin.Plugin.Community/Web/communityPageController13.js', import.meta.url);
 const source = await fs.readFile(sourcePath, 'utf8');
 const moduleUrl = `data:text/javascript;base64,${Buffer.from(source).toString('base64')}`;
@@ -37,10 +44,16 @@ assert.equal(normalized.items[0].nested.createdUtc, '2026-08-08T12:00:00Z');
 
 const alreadyCamel = module.normalizeCommunityJson({ items: [{ id: 4, name: 'Noticias' }] });
 assert.equal(alreadyCamel.items[0].name, 'Noticias');
+assert.equal(module.isCommunityApiUrl('https://media.example.test/jellyfin/Community/api/v1/categories'), true);
+assert.equal(module.isCommunityApiUrl('/jellyfin/Community/api/v1/threads?page=1'), true);
+assert.equal(module.isCommunityApiUrl('https://media.example.test/jellyfin/Users/Me'), false);
+assert.equal(module.versionedResourceUrl('CommunityPageControllerLegacy'), 'https://media.example.test/jellyfin/web/ConfigurationPage?name=CommunityPageControllerLegacy&v=1.4.0.0');
 
 console.log(JSON.stringify({
     status: 'passed',
     pascalCaseContract: true,
     camelCaseContract: true,
-    emptyArraySafe: module.normalizeCommunityJson({ Items: [] }).items.length === 0
+    emptyArraySafe: module.normalizeCommunityJson({ Items: [] }).items.length === 0,
+    reverseProxySubpath: true,
+    automaticServerUrl: true
 }));
