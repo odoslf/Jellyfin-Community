@@ -4,12 +4,18 @@ public sealed class CommunityWebIntegrationState
 {
     private long _indexRequestsSeen;
     private long _indexResponsesTransformed;
+    private long _configRequestsSeen;
+    private long _configResponsesTransformed;
     private long _lastInjectionUnixMilliseconds;
     private string? _lastError;
 
     public long IndexRequestsSeen => Interlocked.Read(ref _indexRequestsSeen);
 
     public long IndexResponsesTransformed => Interlocked.Read(ref _indexResponsesTransformed);
+
+    public long ConfigRequestsSeen => Interlocked.Read(ref _configRequestsSeen);
+
+    public long ConfigResponsesTransformed => Interlocked.Read(ref _configResponsesTransformed);
 
     public DateTime? LastInjectionUtc
     {
@@ -22,11 +28,24 @@ public sealed class CommunityWebIntegrationState
 
     public string? LastError => Volatile.Read(ref _lastError);
 
-    public void RecordRequest() => Interlocked.Increment(ref _indexRequestsSeen);
+    public void RecordIndexRequest() => Interlocked.Increment(ref _indexRequestsSeen);
 
-    public void RecordTransformed()
+    public void RecordConfigRequest() => Interlocked.Increment(ref _configRequestsSeen);
+
+    public void RecordIndexTransformed()
     {
         Interlocked.Increment(ref _indexResponsesTransformed);
+        RecordSuccess();
+    }
+
+    public void RecordConfigTransformed()
+    {
+        Interlocked.Increment(ref _configResponsesTransformed);
+        RecordSuccess();
+    }
+
+    private void RecordSuccess()
+    {
         Interlocked.Exchange(ref _lastInjectionUnixMilliseconds, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
         Volatile.Write(ref _lastError, null);
     }

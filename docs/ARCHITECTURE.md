@@ -9,7 +9,7 @@
 - `Services`: reglas de negocio, autorización, Markdown, adjuntos, avisos, moderación y copias.
 - `Infrastructure`: rutas y SQLite.
 - `Tasks`: limpieza, optimización e integridad.
-- `Web`: página del foro, controlador ES module y bootstrap global.
+- `Web`: aplicación independiente del Foro, estilos y bootstrap de navegación Android.
 - `Configuration`: configuración del plugin en el panel de Jellyfin.
 
 ## Persistencia
@@ -22,24 +22,24 @@ El controlador obtiene el usuario desde `IAuthorizationContext`; nunca acepta un
 
 ## Integración con Jellyfin Web 10.10.7
 
-La versión 1.1 evita el fallo de la versión 1.0, donde Jellyfin mostraba el HTML de la página pero no ejecutaba su JavaScript inline.
+Las páginas declaradas por un plugin mediante `IHasWebPages` pertenecen al sistema de configuración. Jellyfin 10.10.7 protege la enumeración de esas páginas con elevación, por lo que no se usan como punto de entrada del usuario normal.
 
-La integración funciona en dos niveles:
+La integración 1.5 funciona así:
 
-1. `CommunityStartupFilter` registra `CommunityWebInjectionMiddleware` antes de completar el pipeline ASP.NET de Jellyfin.
-2. El middleware solo inspecciona respuestas del documento raíz de Jellyfin Web (`/web`, `/web/`, `/web/index.html` o `/web/index.htm`). Cuando recibe el HTML correcto, inserta una etiqueta `script` versionada que apunta a `ConfigurationPage?name=CommunityBootstrap`. No altera archivos en disco.
-3. `communityBootstrap.js` observa los contenedores `.customMenuOptions` de Jellyfin Web y añade una entrada **Comunidad** para usuarios autenticados. La navegación utiliza `Dashboard.getPluginUrl` y `Dashboard.navigate` cuando están disponibles.
-4. `community.html` es solo markup y estilos. Declara `data-controller="CommunityPageController"`.
-5. Jellyfin Web carga `communityPageController.js` como módulo mediante su propio ciclo de vistas. Toda la inicialización, llamadas API, creación de temas y paneles de moderación/administración viven en ese controlador.
+1. `CommunityStartupFilter` registra `CommunityWebInjectionMiddleware` antes del middleware de archivos estáticos.
+2. Para `/web/config.json`, el middleware conserva la configuración existente y añade exactamente un enlace relativo `{ name: "Foro", icon: "forum", url: "../Community/app?..." }` a `menuLinks`, el mecanismo público documentado de Jellyfin Web.
+3. Para `/web/index.html`, inserta un bootstrap 1.5 pequeño. Este cambia el enlace oficial a `target=_self` para que la app Android no intente abrir otra ventana y crea una entrada de reserva solo si Jellyfin todavía no ha renderizado la oficial.
+4. `CommunityAppController` sirve `/Community/app` y sus recursos con `no-cache/no-store`, CSP restrictiva y nombres 1.5. El HTML puede cargarse sin autenticar, pero todos los datos continúan protegidos por `/Community/api/v1`.
+5. La app selecciona en `jellyfin_credentials` la sesión que coincide con el origen/subruta actuales y envía su token mediante cabeceras Jellyfin. Nunca introduce el token en la URL ni solicita una dirección al usuario.
 
-Esta solución no requiere Harmony, no depende de File Transformation y no escribe ni sustituye `index.html`, bundles JavaScript ni otros archivos de Jellyfin Web. Si la inyección falla, el middleware conserva la respuesta original de Jellyfin y registra el diagnóstico en `CommunityWebIntegrationState`.
+El middleware no modifica archivos en disco. Los enlaces son relativos y conservan automáticamente una base URL de proxy como `/jellyfin`. Si la transformación falla, se sirve el recurso original y el diagnóstico queda en `CommunityWebIntegrationState`.
 
 ## Frontend
 
-La interfaz usa clases y variables visuales de Jellyfin y no sobrescribe estilos globales. Las respuestas Markdown llegan renderizadas por el servidor tras desactivar HTML y protocolos peligrosos. Los textos generados en el cliente se escapan antes de insertarse en el DOM.
+La interfaz es un documento aislado y adaptable, sin depender del ciclo de vistas ni de custom elements de Jellyfin Web. Los formularios dinámicos usan `input`, `select`, `textarea` y `button` nativos. Las respuestas Markdown llegan renderizadas por el servidor tras desactivar HTML y protocolos peligrosos. Los textos generados en el cliente se escapan antes de insertarse en el DOM.
 
 El usuario normal dispone de Actividad, Siguiendo, Notificaciones y creación/respuesta de temas. Las pestañas Moderación y Administración solo se muestran cuando `/Community/api/v1/me` confirma el rol correspondiente; además, todos los endpoints sensibles vuelven a comprobar permisos en el servidor.
 
 ## Validación de integración
 
-El workflow crea el ZIP final, lo instala en una configuración vacía de la imagen oficial `jellyfin/jellyfin:10.10.7` y comprueba tanto la API como Jellyfin Web en Chromium. La prueba del navegador verifica expresamente el menú Comunidad, la ejecución del controlador, la creación de un tema por un usuario normal y las funciones administrativas en otra sesión.
+El workflow crea el ZIP final, lo instala en una configuración vacía de la imagen oficial `jellyfin/jellyfin:10.10.7` y comprueba API, `menuLinks`, bootstrap, aplicación independiente y Jellyfin Web en Chromium móvil. La prueba verifica el menú Foro, navegación en la misma WebView, detección de sesión, categorías con opciones nativas, creación por usuario normal, separación administrativa y conservación de una base existente de 1.4.

@@ -12,7 +12,7 @@ public sealed class CommunityIndexHtmlTransformerTests
         var transformed = CommunityIndexHtmlTransformer.InjectBootstrap(html, new Version(1, 1, 0, 0));
 
         Assert.Contains("data-jellyfin-community-bootstrap=\"1.1.0.0\"", transformed, StringComparison.Ordinal);
-        Assert.Contains("./ConfigurationPage?name=CommunityBootstrap&amp;v=1.1.0.0", transformed, StringComparison.Ordinal);
+        Assert.Contains("../Community/assets/communityBootstrap15.js?v=1.1.0.0", transformed, StringComparison.Ordinal);
         Assert.True(transformed.IndexOf(CommunityIndexHtmlTransformer.MarkerAttribute, StringComparison.Ordinal) < transformed.IndexOf("</body>", StringComparison.Ordinal));
     }
 

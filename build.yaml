@@ -1,7 +1,7 @@
 ---
 name: "Community"
 guid: "c24c5b8e-2fa8-47f6-a671-a7eb9d60c114"
-version: "1.4.0.0"
+version: "1.5.0.0"
 targetAbi: "10.10.7.0"
 framework: "net8.0"
 overview: "Foro local integrado con los usuarios y bibliotecas de Jellyfin."
@@ -16,7 +16,7 @@ artifacts:
 - "Jellyfin.Plugin.Community.dll"
 - "Markdig.dll"
 changelog: >
-  1.4 refuerza el funcionamiento detrás de proxy inverso y subrutas. Community
-  obtiene siempre la URL mediante ApiClient desde la sesión Jellyfin activa: no
-  pide, guarda ni obliga a cambiar IP, dominio o puerto. El versionado de recursos
-  se prueba con Jellyfin publicado bajo /jellyfin y conserva las correcciones 1.3.
+  1.5 publica Foro en el menuLinks oficial de Jellyfin Web y abre una aplicación
+  independiente para usuarios normales, compatible con el WebView Android. Toma
+  automáticamente la sesión Jellyfin sin pedir IP, usa controles HTML nativos,
+  separa administración y ofrece errores HTTP con referencia de diagnóstico.

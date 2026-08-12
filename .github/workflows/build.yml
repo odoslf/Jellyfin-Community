@@ -22,7 +22,7 @@ jobs:
       DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
       NUGET_XMLDOC_MODE: skip
       JELLYFIN_URL: http://127.0.0.1:8096
-      COMMUNITY_VERSION: 1.4.0.0
+      COMMUNITY_VERSION: 1.5.0.0
     steps:
       - uses: actions/checkout@v4
 
@@ -43,21 +43,16 @@ jobs:
         run: |
           set -euo pipefail
           node --check src/Jellyfin.Plugin.Community/Web/communityBootstrap.js
-          cp src/Jellyfin.Plugin.Community/Web/communityPageController.js "$RUNNER_TEMP/communityPageController.mjs"
-          node --check "$RUNNER_TEMP/communityPageController.mjs"
-          cp src/Jellyfin.Plugin.Community/Web/communityPageController13.js "$RUNNER_TEMP/communityPageController13.mjs"
-          node --check "$RUNNER_TEMP/communityPageController13.mjs"
+          node --check src/Jellyfin.Plugin.Community/Web/communityForum15.js
           node tests/e2e/community_json_contract.mjs | tee community-json-contract.json
           python -m py_compile tests/e2e/community_api_e2e.py
           python -m py_compile scripts/create-validation-report.py
           node --check tests/e2e/community_browser_e2e.mjs
-          if grep -qi '<script' src/Jellyfin.Plugin.Community/Web/community.html; then
-            echo 'Community page must not contain inline scripts.' >&2
-            exit 1
-          fi
-          grep -q 'data-controller="CommunityPageController"' src/Jellyfin.Plugin.Community/Web/community.html
-          grep -q "const VERSION = '1.4.0.0'" src/Jellyfin.Plugin.Community/Web/communityBootstrap.js
-          grep -q 'CommunityPageControllerLegacy' src/Jellyfin.Plugin.Community/Plugin.cs
+          grep -q 'communityForum15.js?v=1.5.0.0' src/Jellyfin.Plugin.Community/Web/communityForum15.html
+          grep -q "const VERSION = '1.5.0.0'" src/Jellyfin.Plugin.Community/Web/communityBootstrap.js
+          grep -q "const VERSION = '1.5.0.0'" src/Jellyfin.Plugin.Community/Web/communityForum15.js
+          grep -q 'CommunityConfiguration' src/Jellyfin.Plugin.Community/Plugin.cs
+          ! grep -q 'CommunityPageControllerLegacy' src/Jellyfin.Plugin.Community/Plugin.cs
 
       - name: Restore
         run: dotnet restore Jellyfin.Plugin.Community.sln --force-evaluate
@@ -113,7 +108,7 @@ jobs:
           python3 tests/e2e/community_api_e2e.py | tee artifacts/runtime-api-e2e.json
           test -s artifacts/runtime-api-e2e.json
 
-      - name: Verify real Jellyfin index injection and uncached web resources
+      - name: Verify real Jellyfin menu, standalone Forum and uncached resources
         shell: bash
         run: |
           set -euo pipefail
@@ -122,12 +117,16 @@ jobs:
             -o artifacts/community-index.html \
             "$JELLYFIN_URL/web/index.html?community-ci=$GITHUB_SHA"
           grep -q 'data-jellyfin-community-bootstrap' artifacts/community-index.html
-          grep -q 'CommunityBootstrap' artifacts/community-index.html
+          grep -q 'communityBootstrap15.js' artifacts/community-index.html
           grep -Eiq '^cache-control:.*no-cache' artifacts/community-index-headers.txt
-          curl -fsS "$JELLYFIN_URL/web/ConfigurationPage?name=CommunityPageController&v=${COMMUNITY_VERSION}" \
-            -o artifacts/community-controller-13.js
-          grep -q 'CommunityPageController13' artifacts/community-controller-13.js
-          grep -q 'normalizeCommunityJson' artifacts/community-controller-13.js
+          curl -fsS "$JELLYFIN_URL/web/config.json?community-ci=$GITHUB_SHA" -o artifacts/community-web-config.json
+          jq -e '.menuLinks | map(select(.name == "Foro" and .icon == "forum" and .url == "../Community/app?v=1.5.0.0")) | length == 1' artifacts/community-web-config.json
+          curl -fsS -D artifacts/community-app-headers.txt "$JELLYFIN_URL/Community/app?v=${COMMUNITY_VERSION}" -o artifacts/community-app.html
+          grep -q 'communityForum15.js' artifacts/community-app.html
+          grep -Eiq '^cache-control:.*no-cache' artifacts/community-app-headers.txt
+          curl -fsS "$JELLYFIN_URL/Community/assets/communityForum15.js?v=${COMMUNITY_VERSION}" -o artifacts/community-forum-15.js
+          grep -q 'findStoredAuthentication' artifacts/community-forum-15.js
+          grep -q 'jellyfin_credentials' artifacts/community-forum-15.js
 
       - name: Install Playwright Chromium
         shell: bash
@@ -144,7 +143,7 @@ jobs:
           test -s artifacts/runtime-browser-e2e.txt
           test -s artifacts/e2e-user-mobile.png
           test -s artifacts/e2e-admin-mobile.png
-          test -s artifacts/e2e-admin-dashboard-route.png
+          test -s artifacts/e2e-admin-settings.png
 
       - name: Capture Jellyfin runtime logs
         if: always()
@@ -165,7 +164,7 @@ jobs:
             exit 1
           fi
           if [ -s artifacts/jellyfin-10.10.7-runtime.log ]; then
-            grep -q 'Loaded plugin: Community 1.4.0.0' artifacts/jellyfin-10.10.7-runtime.log
+            grep -q 'Loaded plugin: Community 1.5.0.0' artifacts/jellyfin-10.10.7-runtime.log
             grep -q 'Jellyfin Community initialized' artifacts/jellyfin-10.10.7-runtime.log
           fi
 
@@ -190,22 +189,25 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Jellyfin.Plugin.Community-1.4.0.0-net8-validated
+          name: Jellyfin.Plugin.Community-1.5.0.0-net8-validated
           retention-days: 14
           if-no-files-found: warn
           path: |
-            artifacts/Jellyfin.Plugin.Community_1.4.0.0.zip
-            artifacts/Jellyfin.Plugin.Community_1.4.0.0.zip.sha256
+            artifacts/Jellyfin.Plugin.Community_1.5.0.0.zip
+            artifacts/Jellyfin.Plugin.Community_1.5.0.0.zip.sha256
             artifacts/VALIDATION-REPORT.md
             artifacts/runtime-api-e2e.json
             artifacts/runtime-browser-e2e.txt
             artifacts/community-json-contract.json
             artifacts/community-index-headers.txt
             artifacts/community-index.html
-            artifacts/community-controller-13.js
+            artifacts/community-web-config.json
+            artifacts/community-app-headers.txt
+            artifacts/community-app.html
+            artifacts/community-forum-15.js
             artifacts/e2e-user-mobile.png
             artifacts/e2e-admin-mobile.png
-            artifacts/e2e-admin-dashboard-route.png
+            artifacts/e2e-admin-settings.png
             artifacts/jellyfin-10.10.7-runtime.log
             artifacts/jellyfin-container-inspect.json
             vulnerability-audit.txt

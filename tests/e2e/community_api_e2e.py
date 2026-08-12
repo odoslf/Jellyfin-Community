@@ -9,7 +9,7 @@ import urllib.error
 import urllib.request
 
 BASE = os.environ.get("JELLYFIN_URL", "http://127.0.0.1:8096").rstrip("/")
-CLIENT_HEADER = 'MediaBrowser Client="Community%20CI", DeviceId="community-ci", Device="GitHub%20Actions", Version="1.1.0.0"'
+CLIENT_HEADER = 'MediaBrowser Client="Community%20CI", DeviceId="community-ci", Device="GitHub%20Actions", Version="1.5.0.0"'
 ADMIN_NAME = "community-admin"
 ADMIN_PASSWORD = "community-admin-password"
 USER_NAME = "community-user"
@@ -98,22 +98,32 @@ def main() -> int:
     _, index_bytes, content_type = call("GET", "/web/index.html", token=admin_token, expected=(200,), raw=True)
     index_text = index_bytes.decode("utf-8", errors="replace")
     assert "data-jellyfin-community-bootstrap" in index_text, "Community bootstrap was not injected into Jellyfin Web index"
+    assert "communityBootstrap15.js" in index_text, "The cache-isolated 1.5 bootstrap was not injected"
     assert "text/html" in content_type.lower(), content_type
 
-    _, bootstrap_bytes, _ = call("GET", "/web/ConfigurationPage?name=CommunityBootstrap", token=admin_token, expected=(200,), raw=True)
+    config = call("GET", "/web/config.json", token=admin_token, expected=(200,))
+    forum_links = [link for link in config.get("menuLinks", []) if link.get("name") == "Foro"]
+    assert len(forum_links) == 1, config.get("menuLinks")
+    assert forum_links[0]["url"] == "../Community/app?v=1.5.0.0", forum_links[0]
+
+    _, app_bytes, app_content_type = call("GET", "/Community/app", expected=(200,), raw=True)
+    app = app_bytes.decode("utf-8", errors="replace")
+    assert "communityForum15.js" in app
+    assert "CommunityPageController" not in app
+    assert "text/html" in app_content_type.lower(), app_content_type
+
+    _, bootstrap_bytes, _ = call("GET", "/Community/assets/communityBootstrap15.js", expected=(200,), raw=True)
     bootstrap = bootstrap_bytes.decode("utf-8", errors="replace")
     assert "JellyfinCommunityBootstrap" in bootstrap
     assert "customMenuOptions" in bootstrap
-    assert "__communityAjaxAdapterInstalled" in bootstrap
+    assert "target = '_self'" in bootstrap
 
-    _, controller_bytes, _ = call("GET", "/web/ConfigurationPage?name=CommunityPageController", token=admin_token, expected=(200,), raw=True)
-    controller = controller_bytes.decode("utf-8", errors="replace")
-    assert "export default class CommunityPageController" in controller
-
-    _, page_bytes, _ = call("GET", "/web/ConfigurationPage?name=Community", token=admin_token, expected=(200,), raw=True)
-    page = page_bytes.decode("utf-8", errors="replace")
-    assert 'data-controller="CommunityPageController"' in page
-    assert "<script" not in page.lower(), "Community page must not rely on inline script execution"
+    _, forum_js_bytes, _ = call("GET", "/Community/assets/communityForum15.js", expected=(200,), raw=True)
+    forum_js = forum_js_bytes.decode("utf-8", errors="replace")
+    assert "findStoredAuthentication" in forum_js
+    assert "jellyfin_credentials" in forum_js
+    assert 'id="newCategory"' in forum_js
+    assert 'is="emby-select"' not in forum_js
 
     me_admin = call("GET", "/Community/api/v1/me", token=admin_token, expected=(200,))
     assert me_admin["isAdministrator"] is True
@@ -129,6 +139,10 @@ def main() -> int:
     me_user = call("GET", "/Community/api/v1/me", token=user_token, expected=(200,))
     assert me_user["isAdministrator"] is False
     assert me_user["isModerator"] is False
+
+    missing_thread = call("GET", "/Community/api/v1/threads/999999999", token=user_token, expected=(404,))
+    assert missing_thread["error"] == "not_found", missing_thread
+    assert missing_thread.get("requestId"), missing_thread
 
     user_categories = call("GET", "/Community/api/v1/categories", token=user_token, expected=(200,))
     writable = next((category for category in user_categories if not category["isArchived"] and not category["isReadOnly"]), None)
@@ -196,6 +210,8 @@ def main() -> int:
     integration = call("GET", "/Community/api/v1/admin/web-integration", token=admin_token, expected=(200,))
     assert integration["indexRequestsSeen"] >= 1, integration
     assert integration["indexResponsesTransformed"] >= 1, integration
+    assert integration["configRequestsSeen"] >= 1, integration
+    assert integration["configResponsesTransformed"] >= 1, integration
     assert not integration.get("lastError"), integration
 
     print(json.dumps({
@@ -206,6 +222,8 @@ def main() -> int:
         "webIntegration": {
             "indexRequestsSeen": integration["indexRequestsSeen"],
             "indexResponsesTransformed": integration["indexResponsesTransformed"],
+            "configRequestsSeen": integration["configRequestsSeen"],
+            "configResponsesTransformed": integration["configResponsesTransformed"],
             "lastError": integration.get("lastError"),
         },
     }, ensure_ascii=False))

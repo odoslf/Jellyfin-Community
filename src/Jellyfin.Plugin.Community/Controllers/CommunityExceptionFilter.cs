@@ -17,6 +17,7 @@ public sealed class CommunityExceptionFilter : IExceptionFilter
 
     public void OnException(ExceptionContext context)
     {
+        var requestId = context.HttpContext.TraceIdentifier;
         var (status, code) = context.Exception switch
         {
             UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, "unauthorized"),
@@ -29,13 +30,18 @@ public sealed class CommunityExceptionFilter : IExceptionFilter
 
         if (status >= 500)
         {
-            _logger.LogError(context.Exception, "Unhandled Jellyfin Community API error.");
+            _logger.LogError(context.Exception, "Unhandled Jellyfin Community API error. RequestId: {RequestId}", requestId);
         }
+
+        context.HttpContext.Response.Headers["X-Request-Id"] = requestId;
 
         context.Result = new ObjectResult(new
         {
             error = code,
-            message = status >= 500 ? "An internal Community error occurred." : context.Exception.Message
+            message = status >= 500
+                ? "El servidor no pudo completar la operación de Community. Consulte el registro con la referencia indicada."
+                : context.Exception.Message,
+            requestId
         })
         {
             StatusCode = status

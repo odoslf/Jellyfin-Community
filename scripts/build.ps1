@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $PSScriptRoot
-$Version = '1.2.0.0'
+$Version = '1.5.0.0'
 $Publish = Join-Path $Root 'artifacts/publish'
 $Package = Join-Path $Root "artifacts/Jellyfin.Plugin.Community_$Version.zip"
 $Audit = Join-Path $Root 'artifacts/vulnerability-audit.txt'

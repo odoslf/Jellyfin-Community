@@ -176,6 +176,8 @@ public sealed record WebIntegrationStatusDto(
     string Version,
     long IndexRequestsSeen,
     long IndexResponsesTransformed,
+    long ConfigRequestsSeen,
+    long ConfigResponsesTransformed,
     DateTime? LastInjectionUtc,
     string? LastError);
 

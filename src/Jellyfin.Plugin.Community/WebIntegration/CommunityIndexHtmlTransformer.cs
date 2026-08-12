@@ -5,7 +5,7 @@ namespace Jellyfin.Plugin.Community.WebIntegration;
 internal static class CommunityIndexHtmlTransformer
 {
     internal const string MarkerAttribute = "data-jellyfin-community-bootstrap";
-    internal const string BootstrapPageName = "CommunityBootstrap";
+    internal const string BootstrapAssetPath = "../Community/assets/communityBootstrap15.js";
 
     public static string InjectBootstrap(string html, Version version)
     {
@@ -26,10 +26,10 @@ internal static class CommunityIndexHtmlTransformer
         var versionString = version.ToString();
         var script = string.Format(
             CultureInfo.InvariantCulture,
-            "<script {0}=\"{1}\" src=\"./ConfigurationPage?name={2}&amp;v={1}\" defer></script>",
+            "<script {0}=\"{1}\" src=\"{2}?v={1}\" defer></script>",
             MarkerAttribute,
             versionString,
-            BootstrapPageName);
+            BootstrapAssetPath);
 
         return html.Insert(closingBody, script);
     }

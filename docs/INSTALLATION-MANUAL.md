@@ -23,7 +23,7 @@
 4. Inicie Jellyfin.
 5. Abra el registro del servidor y confirme que no aparecen errores de carga, dependencias o migraciones relacionados con `Community`.
 6. Entre en **Panel de control → Plugins → Community** y revise los límites, adjuntos, moderadores, copias y retención.
-7. Habilite Community y abra **Comunidad** desde el menú principal.
+7. Habilite Community, cierre y vuelva a abrir una vez el cliente y abra **Foro** desde el menú principal. No configure ninguna IP para Community.
 
 ## Prueba inicial recomendada
 
