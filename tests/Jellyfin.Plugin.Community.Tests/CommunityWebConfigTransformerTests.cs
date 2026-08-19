@@ -17,7 +17,7 @@ public sealed class CommunityWebConfigTransformerTests
             }
             """;
 
-        var transformed = CommunityWebConfigTransformer.AddForumMenuLink(source, new Version(1, 5, 0, 0));
+        var transformed = CommunityWebConfigTransformer.AddForumMenuLink(source, new Version(1, 6, 0, 0));
         var root = JsonNode.Parse(transformed)!.AsObject();
         var links = root["menuLinks"]!.AsArray();
 
@@ -25,7 +25,7 @@ public sealed class CommunityWebConfigTransformerTests
         Assert.Equal(2, links.Count);
         Assert.Equal("Foro", links[0]!["name"]!.GetValue<string>());
         Assert.Equal("forum", links[0]!["icon"]!.GetValue<string>());
-        Assert.Equal("../Community/app?v=1.5.0.0", links[0]!["url"]!.GetValue<string>());
+        Assert.Equal("../Community/app?v=1.6.0.0", links[0]!["url"]!.GetValue<string>());
         Assert.Equal("Ayuda", links[1]!["name"]!.GetValue<string>());
     }
 
@@ -41,18 +41,18 @@ public sealed class CommunityWebConfigTransformerTests
             }
             """;
 
-        var transformed = CommunityWebConfigTransformer.AddForumMenuLink(source, new Version(1, 5, 0, 0));
+        var transformed = CommunityWebConfigTransformer.AddForumMenuLink(source, new Version(1, 6, 0, 0));
         var links = JsonNode.Parse(transformed)!["menuLinks"]!.AsArray();
 
         Assert.Equal(2, links.Count);
         Assert.Single(links, link => link?["name"]?.GetValue<string>() == "Foro");
-        Assert.Equal("../Community/app?v=1.5.0.0", links[0]!["url"]!.GetValue<string>());
+        Assert.Equal("../Community/app?v=1.6.0.0", links[0]!["url"]!.GetValue<string>());
     }
 
     [Fact]
     public void AddForumMenuLinkCreatesMissingArray()
     {
-        var transformed = CommunityWebConfigTransformer.AddForumMenuLink("{\"useProxy\":true}", new Version(1, 5, 0, 0));
+        var transformed = CommunityWebConfigTransformer.AddForumMenuLink("{\"useProxy\":true}", new Version(1, 6, 0, 0));
         var root = JsonNode.Parse(transformed)!.AsObject();
 
         Assert.Single(root["menuLinks"]!.AsArray());

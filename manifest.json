@@ -12,8 +12,8 @@
         "changelog": "Añade un Canal de Jellyfin nativo (IChannel) para acceder al Foro desde cualquier cliente (Android, Android TV, Web) además del enlace oficial en menuLinks.",
         "targetAbi": "10.10.7.0",
         "sourceUrl": "https://github.com/odoslf/Jellyfin-Community/releases/download/v1.6.0.0/Jellyfin.Plugin.Community_1.6.0.0.zip",
-        "checksum": "339BBDAD9235C8667909DD6D23D90BEB",
-        "timestamp": "2026-08-19T00:52:52.919607Z",
+        "checksum": "FF641453207C96900173D1F5A2BE61B1",
+        "timestamp": "2026-08-19T01:02:57.733907Z",
         "dependencies": []
       },
       {

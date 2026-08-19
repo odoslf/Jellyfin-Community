@@ -35,13 +35,18 @@ public sealed class CommunityChannel : IChannel
 
     public Task<ChannelItemResult> GetChannelItems(InternalChannelItemQuery query, CancellationToken cancellationToken)
     {
+        if (!string.IsNullOrEmpty(query.FolderId))
+        {
+            return Task.FromResult(new ChannelItemResult());
+        }
+
         var items = new List<ChannelItemInfo>
         {
             new ChannelItemInfo
             {
                 Id = "community_forum_access",
                 Name = "Acceder al Foro Comunitario",
-                Overview = "Haga clic aquí para abrir el Foro Comunitario de Jellyfin.",
+                Overview = "Abre la aplicación del Foro Comunitario de Jellyfin.",
                 Type = ChannelItemType.Folder,
                 FolderType = ChannelFolderType.Container,
                 HomePageUrl = "../Community/app"
@@ -62,6 +67,6 @@ public sealed class CommunityChannel : IChannel
 
     public IEnumerable<ImageType> GetSupportedChannelImages()
     {
-        return [ImageType.Primary];
+        return [];
     }
 }

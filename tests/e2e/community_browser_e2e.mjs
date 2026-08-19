@@ -35,7 +35,7 @@ async function login(page, credentials) {
     await page.locator('#txtManualPassword').fill(credentials.password);
     await page.locator('.manualLoginForm button[type="submit"]').click();
     await page.waitForFunction(() => typeof window.ApiClient?.accessToken === 'function' && Boolean(window.ApiClient.accessToken()), null, { timeout: 30_000 });
-    await page.waitForFunction(() => Boolean(window.JellyfinCommunityBootstrap?.VERSION === '1.5.0.0'), null, { timeout: 30_000 });
+    await page.waitForFunction(() => Boolean(window.JellyfinCommunityBootstrap?.VERSION === '1.6.0.0'), null, { timeout: 30_000 });
     // Authentication completes before Jellyfin's own post-login navigation has
     // necessarily settled.  Waiting for the normal shell prevents that pending
     // navigation from racing (and replacing) a subsequent plugin route.
@@ -56,7 +56,7 @@ async function openForumFromNormalMenu(page) {
     await forumLink.click();
 
     await page.waitForURL(url => /\/Community\/app(?:\?|$)/i.test(url.pathname + url.search), { timeout: 30_000 });
-    await page.waitForFunction(() => Boolean(window.JellyfinCommunityForum15?.VERSION === '1.5.0.0'), null, { timeout: 30_000 });
+    await page.waitForFunction(() => Boolean(window.JellyfinCommunityForum15?.VERSION === '1.6.0.0'), null, { timeout: 30_000 });
     await page.locator('#forumContent .forum-grid').waitFor({ state: 'visible', timeout: 30_000 });
     const error = page.locator('#forumBanner.error');
     if (await error.isVisible()) throw new Error(`Forum initialization error: ${await error.innerText()}`);
