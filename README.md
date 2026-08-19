@@ -18,7 +18,7 @@ En **Panel de control → Plugins → Repositorios → +** añada:
 
 Guarde el repositorio, abra **Plugins → Catálogo**, seleccione **Community**, instálelo y reinicie Jellyfin cuando se le solicite. Después de actualizar el plugin, cierre y vuelva a abrir una vez la aplicación Jellyfin o recargue completamente Jellyfin Web para que el cliente cargue el nuevo `index.html` y el bootstrap de Community.
 
-## Qué cambia en 1.5
+## Qué cambia en 1.6
 
 La interfaz se ha reconstruido para corregir el problema de diseño de las versiones anteriores: una página declarada mediante `IHasWebPages` es una página de configuración de Jellyfin y su enumeración requiere privilegios elevados; no es una sección fiable para usuarios normales.
 
