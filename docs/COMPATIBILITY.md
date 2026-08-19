@@ -8,10 +8,9 @@ La línea estable inicial está congelada sobre:
 - ABI de catálogo 10.10.7.0
 - .NET 8 / net8.0
 
-La interfaz de **Foro** 1.5 está validada en Jellyfin Web 10.10.7 y en el flujo de
-la app Android que carga ese cliente dentro de un WebView. No se declara una página
-de foro en clientes nativos que no ejecutan Jellyfin Web, porque Jellyfin no ofrece
-un punto de extensión equivalente para añadirles vistas arbitrarias.
+La interfaz de **Foro** 1.6 añade un Canal nativo (IChannel) para que el Foro
+sea accesible desde cualquier cliente (Android, Android TV, Web) además de la opción
+oficial en `menuLinks` para Jellyfin Web.
 
 El paquete 1.0.0.0 se conserva en una rama de artefacto (`release-1.0.0.0`) para que el `sourceUrl` del catálogo no cambie aunque `main` evolucione.
 

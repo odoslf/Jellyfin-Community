@@ -3,7 +3,8 @@
 ## Capas
 
 - `Plugin.cs`: metadatos y registro de recursos web embebidos.
-- `PluginServiceRegistrator.cs`: registro de servicios, estado de integración web y `IStartupFilter`.
+- `PluginServiceRegistrator.cs`: registro de servicios, estado de integración web, `IChannel` y `IStartupFilter`.
+- `CommunityChannel.cs`: implementación nativa de `IChannel` para exponer el Foro como una sección/canal en cualquier cliente de Jellyfin (Android, Android TV, Web, etc.).
 - `WebIntegration`: integración no destructiva con Jellyfin Web 10.10.7.
 - `Controllers`: API REST autenticada.
 - `Services`: reglas de negocio, autorización, Markdown, adjuntos, avisos, moderación y copias.
