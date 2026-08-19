@@ -18,6 +18,10 @@ En **Panel de control → Plugins → Repositorios → +** añada:
 
 Guarde el repositorio, abra **Plugins → Catálogo**, seleccione **Community**, instálelo y reinicie Jellyfin cuando se le solicite. Después de actualizar el plugin, cierre y vuelva a abrir una vez la aplicación Jellyfin o recargue completamente Jellyfin Web para que el cliente cargue el nuevo `index.html` y el bootstrap de Community.
 
+## Qué cambia en 1.6
+
+Community 1.6 añade soporte nativo de Canales de Jellyfin (`IChannel`), permitiendo acceder al Foro como una sección/canal nativo desde cualquier cliente (incluidos Android TV, Android y Web) además del enlace oficial `menuLinks` en la barra lateral.
+
 ## Qué cambia en 1.5
 
 La interfaz se ha reconstruido para corregir el problema de diseño de las versiones anteriores: una página declarada mediante `IHasWebPages` es una página de configuración de Jellyfin y su enumeración requiere privilegios elevados; no es una sección fiable para usuarios normales.
