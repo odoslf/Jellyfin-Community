@@ -9,7 +9,7 @@ import urllib.error
 import urllib.request
 
 BASE = os.environ.get("JELLYFIN_URL", "http://127.0.0.1:8096").rstrip("/")
-CLIENT_HEADER = 'MediaBrowser Client="Community%20CI", DeviceId="community-ci", Device="GitHub%20Actions", Version="1.5.0.0"'
+CLIENT_HEADER = 'MediaBrowser Client="Community%20CI", DeviceId="community-ci", Device="GitHub%20Actions", Version="1.6.0.0"'
 ADMIN_NAME = "community-admin"
 ADMIN_PASSWORD = "community-admin-password"
 USER_NAME = "community-user"
@@ -104,7 +104,7 @@ def main() -> int:
     config = call("GET", "/web/config.json", token=admin_token, expected=(200,))
     forum_links = [link for link in config.get("menuLinks", []) if link.get("name") == "Foro"]
     assert len(forum_links) == 1, config.get("menuLinks")
-    assert forum_links[0]["url"] == "../Community/app?v=1.5.0.0", forum_links[0]
+    assert forum_links[0]["url"] == "../Community/app?v=1.6.0.0", forum_links[0]
 
     _, app_bytes, app_content_type = call("GET", "/Community/app", expected=(200,), raw=True)
     app = app_bytes.decode("utf-8", errors="replace")

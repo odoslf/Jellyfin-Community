@@ -10,7 +10,7 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 import zipfile
 
-VERSION = os.environ.get("COMMUNITY_VERSION", "1.5.0.0")
+VERSION = os.environ.get("COMMUNITY_VERSION", "1.6.0.0")
 PACKAGE_NAME = f"Jellyfin.Plugin.Community_{VERSION}.zip"
 
 
@@ -138,7 +138,7 @@ def main() -> int:
     if "cache-control:" not in index_headers.lower() or "no-cache" not in index_headers.lower():
         raise RuntimeError("The real Jellyfin index response is missing Community no-cache headers")
     forum_links = [link for link in web_config.get("menuLinks", []) if link.get("name") == "Foro"]
-    if len(forum_links) != 1 or forum_links[0].get("url") != "../Community/app?v=1.5.0.0":
+    if len(forum_links) != 1 or forum_links[0].get("url") != f"../Community/app?v={VERSION}":
         raise RuntimeError(f"The real Jellyfin config does not contain exactly one Forum link: {forum_links}")
     if "communityForum15.js" not in app_html or "CommunityPageController" in app_html:
         raise RuntimeError("The standalone Forum page was not served with its isolated 1.5 resource")

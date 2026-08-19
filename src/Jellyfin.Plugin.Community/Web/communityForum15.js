@@ -1,7 +1,7 @@
 (() => {
     'use strict';
 
-    const VERSION = '1.5.0.0';
+    const VERSION = '1.6.0.0';
     const pathIndex = location.pathname.toLowerCase().lastIndexOf('/community/app');
     const serverPath = pathIndex >= 0 ? location.pathname.slice(0, pathIndex).replace(/\/$/, '') : '';
     const serverRoot = `${location.origin}${serverPath}`;

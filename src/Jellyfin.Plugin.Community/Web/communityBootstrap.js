@@ -1,7 +1,7 @@
 (() => {
     'use strict';
 
-    const VERSION = '1.5.0.0';
+    const VERSION = '1.6.0.0';
     const MARKER = 'data-jellyfin-community-menu';
     const currentScript = document.currentScript;
     const forumUrl = currentScript?.src
@@ -22,6 +22,28 @@
         event.preventDefault();
         event.stopPropagation();
         location.assign(event.currentTarget.href);
+    }
+
+    function interceptChannelCardClick(event) {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        const card = target.closest('[data-id="community_forum_access"], [data-id*="Community"], a[href*="community_forum_access"]');
+        if (card) {
+            event.preventDefault();
+            event.stopPropagation();
+            location.assign(forumUrl);
+            return;
+        }
+
+        const fallbackCard = target.closest('[data-id], .card, .listItem');
+        if (fallbackCard) {
+            const itemId = fallbackCard.getAttribute('data-id') || fallbackCard.getAttribute('data-itemid') || '';
+            if (itemId === 'community_forum_access') {
+                event.preventDefault();
+                event.stopPropagation();
+                location.assign(forumUrl);
+            }
+        }
     }
 
     function prepareLink(anchor) {
@@ -76,6 +98,7 @@
     observer.observe(document.documentElement, { childList: true, subtree: true });
     document.addEventListener('viewshow', scheduleRefresh);
     document.addEventListener('pageshow', scheduleRefresh);
+    document.addEventListener('click', interceptChannelCardClick, true);
     scheduleRefresh();
 
     window.JellyfinCommunityBootstrap = Object.freeze({ VERSION, forumUrl, refreshMenu });
