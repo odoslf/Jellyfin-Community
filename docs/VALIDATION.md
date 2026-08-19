@@ -1,4 +1,4 @@
-# Validación de Community 1.5.0.0
+# Validación de Community 1.6.0.0
 
 Esta línea está dirigida a **Jellyfin Server 10.10.7 / .NET 8**. La publicación
 solo puede usar el mismo ZIP que haya superado todos los controles siguientes.

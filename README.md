@@ -7,7 +7,7 @@
 
 **Community** añade un foro local a Jellyfin. Reutiliza las cuentas, sesiones y permisos del servidor y guarda sus datos en una base SQLite independiente. No crea usuarios paralelos, no almacena contraseñas y no incorpora telemetría.
 
-> **Línea estable 1.x:** Jellyfin Server **10.10.7**, ABI de catálogo **10.10.7.0**, **.NET 8 (`net8.0`)**. La versión de esta rama es **1.5.0.0**.
+> **Línea estable 1.x:** Jellyfin Server **10.10.7**, ABI de catálogo **10.10.7.0**, **.NET 8 (`net8.0`)**. La versión de esta rama es **1.6.0.0**.
 
 ## Instalación desde Jellyfin
 
@@ -59,7 +59,7 @@ El menú se integra específicamente con **Jellyfin Web 10.10.7** y con la aplic
 | Jellyfin Server | **10.10.7** |
 | ABI de catálogo | **10.10.7.0** |
 | Framework | **.NET 8 / net8.0** |
-| Plugin | **1.5.0.0** |
+| Plugin | **1.6.0.0** |
 | SDK de compilación CI | **8.0.423** |
 
 La línea 1.x permanece deliberadamente fijada a Jellyfin 10.10.7/.NET 8. El soporte para versiones posteriores de Jellyfin que usen otro runtime se publicará como una línea separada y no sustituirá silenciosamente este artefacto.
@@ -100,7 +100,7 @@ cd Jellyfin-Community
 El paquete de esta versión se genera en:
 
 ```text
-artifacts/Jellyfin.Plugin.Community_1.5.0.0.zip
+artifacts/Jellyfin.Plugin.Community_1.6.0.0.zip
 ```
 
 ## Estructura

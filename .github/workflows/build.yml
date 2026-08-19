@@ -196,12 +196,12 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Jellyfin.Plugin.Community-1.5.0.0-net8-validated
+          name: Jellyfin.Plugin.Community-1.6.0.0-net8-validated
           retention-days: 14
           if-no-files-found: warn
           path: |
-            artifacts/Jellyfin.Plugin.Community_1.5.0.0.zip
-            artifacts/Jellyfin.Plugin.Community_1.5.0.0.zip.sha256
+            artifacts/Jellyfin.Plugin.Community_1.6.0.0.zip
+            artifacts/Jellyfin.Plugin.Community_1.6.0.0.zip.sha256
             artifacts/VALIDATION-REPORT.md
             artifacts/runtime-api-e2e.json
             artifacts/runtime-browser-e2e.txt
