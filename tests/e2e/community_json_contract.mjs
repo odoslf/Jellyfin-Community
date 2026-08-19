@@ -62,7 +62,7 @@ vm.runInThisContext(source, { filename: sourcePath.pathname });
 
 const forum = globalThis.JellyfinCommunityForum15;
 assert.ok(forum, 'The standalone Forum contract was not exposed.');
-assert.equal(forum.VERSION, '1.5.0.0');
+assert.equal(forum.VERSION, '1.6.0.0');
 assert.equal(forum.apiRoot, 'https://media.example.test/jellyfin/Community/api/v1/');
 
 const normalized = forum.normalizeJson({

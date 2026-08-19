@@ -9,7 +9,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 PLUGIN_GUID = "c24c5b8e-2fa8-47f6-a671-a7eb9d60c114"
-PLUGIN_VERSION = "1.5.0.0"
+PLUGIN_VERSION = "1.6.0.0"
 TARGET_ABI = "10.10.7.0"
 
 
