@@ -10,7 +10,7 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 import zipfile
 
-VERSION = os.environ.get("COMMUNITY_VERSION", "1.5.0.0")
+VERSION = os.environ.get("COMMUNITY_VERSION", "1.6.0.0")
 PACKAGE_NAME = f"Jellyfin.Plugin.Community_{VERSION}.zip"
 
 

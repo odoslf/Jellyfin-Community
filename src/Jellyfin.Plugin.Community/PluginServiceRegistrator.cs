@@ -24,6 +24,7 @@ public sealed class PluginServiceRegistrator : IPluginServiceRegistrator
         serviceCollection.AddSingleton<BackupService>();
         serviceCollection.AddSingleton<CommunityService>();
         serviceCollection.AddSingleton<CommunityWebIntegrationState>();
+        serviceCollection.AddSingleton<MediaBrowser.Controller.Channels.IChannel, CommunityChannel>();
         serviceCollection.AddTransient<IStartupFilter, CommunityStartupFilter>();
         serviceCollection.AddHostedService<CommunityStartupService>();
     }

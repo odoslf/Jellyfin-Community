@@ -1,7 +1,7 @@
 (() => {
     'use strict';
 
-    const VERSION = '1.5.0.0';
+    const VERSION = '1.6.0.0';
     const MARKER = 'data-jellyfin-community-menu';
     const currentScript = document.currentScript;
     const forumUrl = currentScript?.src
@@ -22,6 +22,19 @@
         event.preventDefault();
         event.stopPropagation();
         location.assign(event.currentTarget.href);
+    }
+
+    function interceptChannelCardClick(event) {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        const card = target.closest('[data-id], .card, .listItem');
+        if (!card) return;
+        const textContent = card.textContent || '';
+        if (textContent.includes('Foro') || textContent.includes('community_forum_access')) {
+            event.preventDefault();
+            event.stopPropagation();
+            location.assign(forumUrl);
+        }
     }
 
     function prepareLink(anchor) {
@@ -76,6 +89,7 @@
     observer.observe(document.documentElement, { childList: true, subtree: true });
     document.addEventListener('viewshow', scheduleRefresh);
     document.addEventListener('pageshow', scheduleRefresh);
+    document.addEventListener('click', interceptChannelCardClick, true);
     scheduleRefresh();
 
     window.JellyfinCommunityBootstrap = Object.freeze({ VERSION, forumUrl, refreshMenu });

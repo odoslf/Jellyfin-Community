@@ -8,48 +8,21 @@
     "category": "General",
     "versions": [
       {
+        "version": "1.6.0.0",
+        "changelog": "Añade un Canal de Jellyfin nativo (IChannel) para acceder al Foro desde cualquier cliente (Android, Android TV, Web) además del enlace oficial en menuLinks.",
+        "targetAbi": "10.10.7.0",
+        "sourceUrl": "https://github.com/odoslf/Jellyfin-Community/releases/download/v1.6.0.0/Jellyfin.Plugin.Community_1.6.0.0.zip",
+        "checksum": "339BBDAD9235C8667909DD6D23D90BEB",
+        "timestamp": "2026-08-19T00:52:52.919607Z",
+        "dependencies": []
+      },
+      {
         "version": "1.5.0.0",
         "changelog": "Foro en menuLinks para usuarios normales, aplicación independiente compatible con WebView Android, sesión automática sin IP, controles nativos, administración separada y errores con referencia.",
         "targetAbi": "10.10.7.0",
         "sourceUrl": "https://github.com/odoslf/Jellyfin-Community/releases/download/v1.5.0.0/Jellyfin.Plugin.Community_1.5.0.0.zip",
         "checksum": "DA569FD03617915DB22277DF04092A8D",
         "timestamp": "2026-08-12T19:55:16.704482Z",
-        "dependencies": []
-      },
-      {
-        "version": "1.4.0.0",
-        "changelog": "URL automática desde la sesión Jellyfin activa, compatible con proxy inverso y subrutas; no requiere configurar IP, dominio ni puerto. Conserva las correcciones funcionales de 1.3.",
-        "targetAbi": "10.10.7.0",
-        "sourceUrl": "https://github.com/odoslf/Jellyfin-Community/releases/download/v1.4.0.0/Jellyfin.Plugin.Community_1.4.0.0.zip",
-        "checksum": "C0D6A65EA915A7ADFA30D675AE5C84B4",
-        "timestamp": "2026-08-12T14:47:32.459063Z",
-        "dependencies": []
-      },
-      {
-        "version": "1.3.0.0",
-        "changelog": "Corrige la integración observada en instalaciones reales de Jellyfin 10.10.7: Comunidad aparece en la navegación normal de usuarios y administradores, la inyección del bootstrap se realiza antes del servicio de archivos estáticos, las categorías y respuestas JSON se normalizan correctamente y la ruta del panel ya permite ver categorías y crear conversaciones. Validado en Jellyfin 10.10.7 real con API y Chromium móvil.",
-        "targetAbi": "10.10.7.0",
-        "sourceUrl": "https://github.com/odoslf/Jellyfin-Community/releases/download/v1.3.0.0/Jellyfin.Plugin.Community_1.3.0.0.zip",
-        "checksum": "D0E14E87C2A9E62A47859B4B871E4253",
-        "timestamp": "2026-08-08T19:09:50Z",
-        "dependencies": []
-      },
-      {
-        "version": "1.2.0.0",
-        "changelog": "Integración web reconstruida y validada en Jellyfin 10.10.7 real; corrige la cabecera móvil, mantiene Comunidad visible y pulsable, y verifica por E2E usuarios normales, administración, creación de temas y permisos.",
-        "targetAbi": "10.10.7.0",
-        "sourceUrl": "https://github.com/odoslf/Jellyfin-Community/releases/download/v1.2.0.0/Jellyfin.Plugin.Community_1.2.0.0.zip",
-        "checksum": "A48A050F61B8DB3965FAE6AD9B763665",
-        "timestamp": "2026-08-08T09:09:13Z",
-        "dependencies": []
-      },
-      {
-        "version": "1.0.0.0",
-        "changelog": "Versión 1.0 para Jellyfin 10.10.7 y .NET 8.",
-        "targetAbi": "10.10.7.0",
-        "sourceUrl": "https://raw.githubusercontent.com/odoslf/Jellyfin-Community/release-1.0.0.0/dist/Jellyfin.Plugin.Community_1.0.0.0_Jellyfin-10.10.7_net8.zip",
-        "checksum": "5FB4D028DDA83927303AA1F894886BE6",
-        "timestamp": "2026-08-07T19:08:51.361594Z",
         "dependencies": []
       }
     ]
