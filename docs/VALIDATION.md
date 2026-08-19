@@ -14,7 +14,7 @@ solo puede usar el mismo ZIP que haya superado todos los controles siguientes.
 7. ZIP reproducible limitado a `Jellyfin.Plugin.Community.dll` y `Markdig.dll`, integridad y SHA-256.
 8. Arranque del ZIP final en la imagen oficial `jellyfin/jellyfin:10.10.7`.
 9. E2E de API con administrador y usuario normal: categorías, temas, respuestas, búsqueda, seguimiento, reacciones, denuncias, moderación y separación de permisos.
-10. Verificación real de `/web/config.json` con una única entrada **Foro**, `index.html` con bootstrap 1.5 y cabeceras anti-caché.
+10. Verificación real de `/web/config.json` con una única entrada **Foro**, `index.html` con bootstrap 1.6 y cabeceras anti-caché.
 11. Verificación de `/Community/app`, su CSP y los recursos `communityForum15` servidos por el plugin.
 12. E2E Chromium móvil que inicia sesión, abre Foro desde el menú normal en la misma vista, comprueba las categorías nativas, crea un tema y valida el panel administrativo separado.
 13. Apertura de `CommunityConfiguration` desde el panel de Jellyfin.

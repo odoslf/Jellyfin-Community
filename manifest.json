@@ -13,7 +13,7 @@
         "targetAbi": "10.10.7.0",
         "sourceUrl": "https://github.com/odoslf/Jellyfin-Community/releases/download/v1.6.0.0/Jellyfin.Plugin.Community_1.6.0.0.zip",
         "checksum": "8A9D6653F1873C94CFB6C84508720C58",
-        "timestamp": "2026-08-19T14:58:52.453910Z",
+        "timestamp": "2026-08-19T17:26:21.651608Z",
         "dependencies": []
       }
     ]
