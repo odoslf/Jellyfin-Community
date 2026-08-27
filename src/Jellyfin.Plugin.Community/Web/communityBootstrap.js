@@ -3,11 +3,32 @@
 
     const VERSION = '1.6.0.0';
     const MARKER = 'data-jellyfin-community-menu';
+    const PREMIERE_MARKER = 'data-jellypremiere-client';
     const currentScript = document.currentScript;
     const forumUrl = currentScript?.src
         ? new URL('../app?v=' + VERSION, currentScript.src).href
         : new URL('../Community/app?v=' + VERSION, document.baseURI).href;
+    const premiereUrl = currentScript?.src
+        ? new URL('../../JellyPremiere/ClientScript.js', currentScript.src).href
+        : new URL('../JellyPremiere/ClientScript.js', document.baseURI).href;
     let scheduled = false;
+    let premiereChecked = false;
+
+    async function loadOptionalJellyPremiere() {
+        if (premiereChecked || document.querySelector(`script[${PREMIERE_MARKER}]`)) return;
+        premiereChecked = true;
+        try {
+            const probe = await fetch(premiereUrl, { credentials: 'same-origin', cache: 'no-store' });
+            if (!probe.ok) return;
+            const script = document.createElement('script');
+            script.setAttribute(PREMIERE_MARKER, VERSION);
+            script.src = premiereUrl;
+            script.defer = true;
+            document.head.appendChild(script);
+        } catch (_) {
+            // JellyPremiere is optional; Community must remain fully functional without it.
+        }
+    }
 
     function isForumLink(anchor) {
         if (!(anchor instanceof HTMLAnchorElement)) return false;
@@ -99,7 +120,8 @@
     document.addEventListener('viewshow', scheduleRefresh);
     document.addEventListener('pageshow', scheduleRefresh);
     document.addEventListener('click', interceptChannelCardClick, true);
+    void loadOptionalJellyPremiere();
     scheduleRefresh();
 
-    window.JellyfinCommunityBootstrap = Object.freeze({ VERSION, forumUrl, refreshMenu });
+    window.JellyfinCommunityBootstrap = Object.freeze({ VERSION, forumUrl, refreshMenu, loadOptionalJellyPremiere });
 })();
