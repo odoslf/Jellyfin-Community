@@ -7,13 +7,15 @@ namespace Jellyfin.Plugin.Community;
 
 public sealed class CommunityChannel : IChannel
 {
+    private const string ForumUrl = "../Community/app?v=1.6.0.0";
+
     public string Name => "Foro";
 
     public string Description => "Foro comunitario local para debatir y conversar.";
 
     public string DataVersion => typeof(Plugin).Assembly.GetName().Version?.ToString() ?? "1.6.0.0";
 
-    public string HomePageUrl => "../Community/app";
+    public string HomePageUrl => ForumUrl;
 
     public ChannelParentalRating ParentalRating => ChannelParentalRating.GeneralAudience;
 
@@ -24,7 +26,8 @@ public sealed class CommunityChannel : IChannel
             ContentTypes = [ChannelMediaContentType.Podcast],
             MediaTypes = [ChannelMediaType.Video],
             MaxPageSize = 50,
-            SupportsSortOrderToggle = false
+            SupportsSortOrderToggle = false,
+            SupportsContentDownloading = false
         };
     }
 
@@ -35,21 +38,27 @@ public sealed class CommunityChannel : IChannel
 
     public Task<ChannelItemResult> GetChannelItems(InternalChannelItemQuery query, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         if (!string.IsNullOrEmpty(query.FolderId))
         {
-            return Task.FromResult(new ChannelItemResult());
+            return Task.FromResult(new ChannelItemResult
+            {
+                Items = [],
+                TotalRecordCount = 0
+            });
         }
 
         var items = new List<ChannelItemInfo>
         {
-            new ChannelItemInfo
+            new()
             {
                 Id = "community_forum_access",
                 Name = "Acceder al Foro Comunitario",
-                Overview = "Abre la aplicación del Foro Comunitario de Jellyfin.",
+                Overview = "Abre la aplicación del Foro Comunitario de Jellyfin. En clientes nativos, el canal Foro sigue siendo visible aunque la interfaz completa de escritura se ofrece mediante Jellyfin Web/WebView.",
                 Type = ChannelItemType.Folder,
                 FolderType = ChannelFolderType.Container,
-                HomePageUrl = "../Community/app"
+                HomePageUrl = ForumUrl
             }
         };
 
@@ -62,7 +71,8 @@ public sealed class CommunityChannel : IChannel
 
     public Task<DynamicImageResponse> GetChannelImage(ImageType type, CancellationToken cancellationToken)
     {
-        return Task.FromResult(new DynamicImageResponse());
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(new DynamicImageResponse { HasImage = false });
     }
 
     public IEnumerable<ImageType> GetSupportedChannelImages()
