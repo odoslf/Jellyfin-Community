@@ -65,10 +65,24 @@ def validate_user(username: str, password: str) -> dict:
     entry = next((item for item in root_items if pick(item, "Name") == "Acceder al Foro Comunitario"), None)
     if entry is None:
         raise AssertionError(f"Native Forum entry missing for {username}: {root_items}")
-    if pick(entry, "Type") != "Folder":
-        raise AssertionError(f"Forum entry should be a Folder for {username}: {entry}")
 
-    return {"username": username, "userId": user_id, "channelId": channel_id, "entryId": pick(entry, "Id")}
+    # Jellyfin serializes IChannel folder items as ChannelFolderItem DTOs.
+    # IsFolder is the stable semantic flag exposed to clients.
+    if pick(entry, "IsFolder") is not True:
+        raise AssertionError(f"Forum entry should be folder-like for {username}: {entry}")
+    if pick(entry, "Type") != "ChannelFolderItem":
+        raise AssertionError(f"Unexpected Jellyfin channel folder DTO type for {username}: {entry}")
+    if pick(entry, "ChannelName") != "Foro":
+        raise AssertionError(f"Forum entry lost channel association for {username}: {entry}")
+
+    return {
+        "username": username,
+        "userId": user_id,
+        "channelId": channel_id,
+        "entryId": pick(entry, "Id"),
+        "entryType": pick(entry, "Type"),
+        "isFolder": pick(entry, "IsFolder"),
+    }
 
 
 def main() -> None:
