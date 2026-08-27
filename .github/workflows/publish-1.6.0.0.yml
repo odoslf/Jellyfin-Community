@@ -26,24 +26,26 @@ jobs:
         with:
           ref: main
 
-      - name: Confirm validated commit and publication state
+      - name: Confirm exact validated main commit
         id: guard
         shell: bash
         run: |
           set -euo pipefail
           test "${{ github.event.workflow_run.head_sha }}" = "$(git rev-parse HEAD)"
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "$TAG is already published; no release assets or catalog data will be changed."
+          subject="$(git log -1 --pretty=%s)"
+          if [ "$subject" = "release: publish Community 1.6.0.0 in Jellyfin catalog" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Catalog-only release commit detected; publication loop stopped."
           else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Download and verify exact validated package
-        if: steps.guard.outputs.exists != 'true'
+        if: steps.guard.outputs.skip != 'true'
         shell: bash
         run: |
           set -euo pipefail
+          rm -rf release-artifact
           mkdir release-artifact
           gh run download "${{ github.event.workflow_run.id }}" --repo "$GITHUB_REPOSITORY" --name "$ARTIFACT" --dir release-artifact
           if [ -d release-artifact/artifacts ]; then
@@ -52,6 +54,7 @@ jobs:
           test -f "release-artifact/$PACKAGE"
           test -f release-artifact/VALIDATION-REPORT.md
           test -f release-artifact/runtime-api-e2e.json
+          test -f release-artifact/runtime-channel-e2e.json
           test -f release-artifact/runtime-browser-e2e.txt
           test -f release-artifact/community-web-config.json
           test -f release-artifact/e2e-user-mobile.png
@@ -64,17 +67,23 @@ jobs:
           sha256sum "$PACKAGE" > "$PACKAGE.sha256"
           md5sum "$PACKAGE" > "$PACKAGE.md5"
 
-      - name: Create immutable GitHub release
-        if: steps.guard.outputs.exists != 'true'
+      - name: Replace release with the validated main artifact
+        if: steps.guard.outputs.skip != 'true'
         shell: bash
         run: |
           set -euo pipefail
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag
+          else
+            git push origin ":refs/tags/$TAG" >/dev/null 2>&1 || true
+          fi
           gh release create "$TAG" \
             "release-artifact/$PACKAGE" \
             "release-artifact/$PACKAGE.md5" \
             "release-artifact/$PACKAGE.sha256" \
             "release-artifact/VALIDATION-REPORT.md" \
             "release-artifact/runtime-api-e2e.json" \
+            "release-artifact/runtime-channel-e2e.json" \
             "release-artifact/runtime-browser-e2e.txt" \
             "release-artifact/community-web-config.json" \
             "release-artifact/e2e-user-mobile.png" \
@@ -83,10 +92,10 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "${{ github.event.workflow_run.head_sha }}" \
             --title "Jellyfin Community 1.6.0.0" \
-            --notes "Community 1.6.0.0 para Jellyfin 10.10.7 / .NET 8. Añade un Canal de Jellyfin nativo (IChannel) para acceder al Foro desde cualquier dispositivo o aplicación (Android, Android TV, Web) además del enlace oficial en menuLinks."
+            --notes "Community 1.6.0.0 final para Jellyfin 10.10.7 / .NET 8. Validada en Jellyfin real: API, permisos, usuario normal, canal nativo Foro, Web/Playwright, empaquetado y logs."
 
-      - name: Add validated release to Jellyfin catalog
-        if: steps.guard.outputs.exists != 'true'
+      - name: Update Jellyfin catalog to exact released package
+        if: steps.guard.outputs.skip != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -95,11 +104,10 @@ jobs:
           from pathlib import Path
           path = Path("manifest.json")
           data = json.loads(path.read_text(encoding="utf-8"))
-          versions = data[0]["versions"]
           package = Path("release-artifact") / os.environ["PACKAGE"]
           entry = {
               "version": os.environ["VERSION"],
-              "changelog": "Añade un Canal de Jellyfin nativo (IChannel) para acceder al Foro desde cualquier cliente (Android, Android TV, Web) además del enlace oficial en menuLinks.",
+              "changelog": "Versión final validada en Jellyfin 10.10.7: foro Web, usuarios normales, permisos, moderación y canal nativo Foro.",
               "targetAbi": "10.10.7.0",
               "sourceUrl": f"https://github.com/{os.environ['GITHUB_REPOSITORY']}/releases/download/{os.environ['TAG']}/{os.environ['PACKAGE']}",
               "checksum": hashlib.md5(package.read_bytes()).hexdigest().upper(),
