@@ -12,8 +12,8 @@
         "changelog": "Versión final validada en Jellyfin 10.10.7: foro Web, usuarios normales, permisos, moderación y canal nativo Foro.",
         "targetAbi": "10.10.7.0",
         "sourceUrl": "https://github.com/odoslf/Jellyfin-Community/releases/download/v1.6.0.0/Jellyfin.Plugin.Community_1.6.0.0.zip",
-        "checksum": "CA46C32712223608348E18BF5448D79A",
-        "timestamp": "2026-08-27T21:36:38.565233Z",
+        "checksum": "14B601B1893D3DEB27FE5EEA1E1AD9A2",
+        "timestamp": "2026-08-27T22:00:39.952278Z",
         "dependencies": []
       }
     ]
