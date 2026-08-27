@@ -46,6 +46,7 @@ jobs:
           node --check src/Jellyfin.Plugin.Community/Web/communityForum15.js
           node tests/e2e/community_json_contract.mjs | tee community-json-contract.json
           python -m py_compile tests/e2e/community_api_e2e.py
+          python -m py_compile tests/e2e/community_channel_e2e.py
           python -m py_compile scripts/create-validation-report.py
           node --check tests/e2e/community_browser_e2e.mjs
           grep -q 'communityForum15.js?v=1.6.0.0' src/Jellyfin.Plugin.Community/Web/communityForum15.html
@@ -107,6 +108,13 @@ jobs:
           set -euo pipefail
           python3 tests/e2e/community_api_e2e.py | tee artifacts/runtime-api-e2e.json
           test -s artifacts/runtime-api-e2e.json
+
+      - name: Real Jellyfin native Forum channel integration test
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tests/e2e/community_channel_e2e.py | tee artifacts/runtime-channel-e2e.json
+          test -s artifacts/runtime-channel-e2e.json
 
       - name: Verify real Jellyfin menu, standalone Forum and uncached resources
         shell: bash
@@ -204,6 +212,7 @@ jobs:
             artifacts/Jellyfin.Plugin.Community_1.6.0.0.zip.sha256
             artifacts/VALIDATION-REPORT.md
             artifacts/runtime-api-e2e.json
+            artifacts/runtime-channel-e2e.json
             artifacts/runtime-browser-e2e.txt
             artifacts/community-json-contract.json
             artifacts/community-index-headers.txt
