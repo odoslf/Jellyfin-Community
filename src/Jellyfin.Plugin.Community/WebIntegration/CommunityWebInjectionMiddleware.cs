@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using MediaBrowser.Common.Configuration;
@@ -10,11 +11,13 @@ namespace Jellyfin.Plugin.Community.WebIntegration;
 /// <summary>
 /// Adds the Forum entry to Jellyfin Web's official menu configuration and injects
 /// a small Android WebView compatibility bootstrap into the physical index file.
-/// Both resources are served here because Jellyfin's static-file middleware can use
-/// SendFileAsync, bypassing response-body wrappers on real installations.
+/// When JellyPremiere is installed in the same server, its client bootstrap is
+/// composed into the same transformed index so both plugins can coexist safely.
 /// </summary>
 public sealed partial class CommunityWebInjectionMiddleware
 {
+    private const string PremiereAssemblyName = "JellyPremiere";
+    private const string PremiereMarker = "data-jellypremiere-client";
     private readonly RequestDelegate _next;
     private readonly CommunityWebIntegrationState _state;
     private readonly IApplicationPaths _applicationPaths;
@@ -119,12 +122,14 @@ public sealed partial class CommunityWebInjectionMiddleware
         }
 
         var lastWriteUtc = File.GetLastWriteTimeUtc(indexPath);
-        var version = typeof(Plugin).Assembly.GetName().Version ?? new Version(1, 5, 0, 0);
+        var version = typeof(Plugin).Assembly.GetName().Version ?? new Version(1, 6, 0, 0);
+        var premiereVersion = GetLoadedPremiereVersion();
 
         var cached = _cachedIndex;
         if (cached is not null
             && cached.SourceLastWriteUtc == lastWriteUtc
-            && cached.PluginVersion == version)
+            && cached.PluginVersion == version
+            && cached.OptionalPluginVersion == premiereVersion)
         {
             return cached;
         }
@@ -134,13 +139,15 @@ public sealed partial class CommunityWebInjectionMiddleware
             cached = _cachedIndex;
             if (cached is not null
                 && cached.SourceLastWriteUtc == lastWriteUtc
-                && cached.PluginVersion == version)
+                && cached.PluginVersion == version
+                && cached.OptionalPluginVersion == premiereVersion)
             {
                 return cached;
             }
 
             var html = File.ReadAllText(indexPath, Encoding.UTF8);
             var transformed = CommunityIndexHtmlTransformer.InjectBootstrap(html, version);
+            transformed = InjectOptionalPremiere(transformed, premiereVersion);
             if (string.Equals(html, transformed, StringComparison.Ordinal))
             {
                 throw new InvalidOperationException("Jellyfin Web index.html no contiene un cierre </body> donde inyectar Community.");
@@ -153,7 +160,8 @@ public sealed partial class CommunityWebInjectionMiddleware
                 $"\"community-index-{digest[..24]}\"",
                 "text/html; charset=utf-8",
                 lastWriteUtc,
-                version);
+                version,
+                premiereVersion);
             _cachedIndex = cached;
             return cached;
         }
@@ -174,7 +182,7 @@ public sealed partial class CommunityWebInjectionMiddleware
         }
 
         var lastWriteUtc = File.GetLastWriteTimeUtc(configPath);
-        var version = typeof(Plugin).Assembly.GetName().Version ?? new Version(1, 5, 0, 0);
+        var version = typeof(Plugin).Assembly.GetName().Version ?? new Version(1, 6, 0, 0);
         var cached = _cachedConfig;
         if (cached is not null
             && cached.SourceLastWriteUtc == lastWriteUtc
@@ -202,10 +210,40 @@ public sealed partial class CommunityWebInjectionMiddleware
                 $"\"community-config-{digest[..24]}\"",
                 "application/json; charset=utf-8",
                 lastWriteUtc,
-                version);
+                version,
+                null);
             _cachedConfig = cached;
             return cached;
         }
+    }
+
+    private static Version? GetLoadedPremiereVersion()
+    {
+        var assembly = AppDomain.CurrentDomain.GetAssemblies()
+            .FirstOrDefault(candidate => string.Equals(candidate.GetName().Name, PremiereAssemblyName, StringComparison.Ordinal));
+        return assembly?.GetName().Version;
+    }
+
+    private static string InjectOptionalPremiere(string html, Version? premiereVersion)
+    {
+        if (premiereVersion is null || html.Contains(PremiereMarker, StringComparison.OrdinalIgnoreCase))
+        {
+            return html;
+        }
+
+        var closingBody = html.LastIndexOf("</body>", StringComparison.OrdinalIgnoreCase);
+        if (closingBody < 0)
+        {
+            return html;
+        }
+
+        var versionString = premiereVersion.ToString();
+        var script = string.Format(
+            CultureInfo.InvariantCulture,
+            "<script {0}=\"{1}\" src=\"../JellyPremiere/ClientScript.js?v={1}\" defer></script>",
+            PremiereMarker,
+            versionString);
+        return html.Insert(closingBody, script);
     }
 
     private static WebResourceKind GetResourceKind(HttpRequest request)
@@ -241,7 +279,8 @@ public sealed partial class CommunityWebInjectionMiddleware
         string ETag,
         string ContentType,
         DateTime SourceLastWriteUtc,
-        Version PluginVersion);
+        Version PluginVersion,
+        Version? OptionalPluginVersion);
 
     private enum WebResourceKind
     {
