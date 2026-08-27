@@ -9,11 +9,11 @@
     "versions": [
       {
         "version": "1.6.0.0",
-        "changelog": "Añade un Canal de Jellyfin nativo (IChannel) para acceder al Foro desde cualquier cliente (Android, Android TV, Web) además del enlace oficial en menuLinks.",
+        "changelog": "Versión final validada en Jellyfin 10.10.7: foro Web, usuarios normales, permisos, moderación y canal nativo Foro.",
         "targetAbi": "10.10.7.0",
         "sourceUrl": "https://github.com/odoslf/Jellyfin-Community/releases/download/v1.6.0.0/Jellyfin.Plugin.Community_1.6.0.0.zip",
-        "checksum": "4E746A0E4D6D9FCF863A65E15094C247",
-        "timestamp": "2026-08-19T19:25:34.599430Z",
+        "checksum": "8367BE20630F182210F87D64694C09A5",
+        "timestamp": "2026-08-27T21:00:17.479978Z",
         "dependencies": []
       }
     ]
