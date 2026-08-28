@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.0.0 — 2026-08-27
+
+- Consolidada la versión final para Jellyfin Server 10.10.7 / .NET 8 y ABI 10.10.7.0.
+- Añadido y validado el canal nativo **Foro** mediante `IChannel`, visible para clientes que exponen Channels de Jellyfin.
+- Validado el acceso de administrador y usuario normal al Foro mediante API real de Jellyfin y navegador Chromium móvil.
+- Reforzada la convivencia con **JellyPremiere**: ambos plugins componen su integración Web sin sobrescribirse.
+- Mantenida la aplicación independiente `/Community/app`, el enlace oficial **Foro** y el flujo Android basado en WebView.
+- Publicación bloqueada por compilación con warnings como errores, tests con cobertura, auditoría de dependencias, paquete final, arranque en `jellyfin/jellyfin:10.10.7`, E2E de API, canal nativo, navegador y revisión de logs.
+- La release final se valida además junto a JellyPremiere y JellyLiveNow en el catálogo unificado ODOS3D antes de actualizar el manifest público.
+- Catálogo recomendado único: `https://raw.githubusercontent.com/odoslf/Repositorio-plugin-Jelly-fin-odos3d.lab/main/manifest.json`.
+
 ## 1.5.0.0 — 2026-08-12
 
 - Sustituida la interfaz heredada por una aplicación de Foro independiente en `/Community/app`; no reutiliza controladores 1.3/1.4 ni páginas de configuración como interfaz de usuario.
