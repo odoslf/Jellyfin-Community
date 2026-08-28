@@ -1,7 +1,7 @@
 ---
 name: "Community"
 guid: "c24c5b8e-2fa8-47f6-a671-a7eb9d60c114"
-version: "1.5.0.0"
+version: "1.6.0.0"
 targetAbi: "10.10.7.0"
 framework: "net8.0"
 overview: "Foro local integrado con los usuarios y bibliotecas de Jellyfin."
@@ -9,14 +9,15 @@ description: >
   Community añade una sección de foro accesible desde Jellyfin Web para usuarios
   normales y administradores, con categorías, conversaciones, menciones,
   reacciones, encuestas, spoilers, notificaciones, moderación, adjuntos opcionales,
-  copias y mantenimiento local mediante SQLite.
+  copias y mantenimiento local mediante SQLite. También expone un canal nativo
+  Foro mediante IChannel para clientes que muestran Channels de Jellyfin.
 category: "General"
 owner: "odoslf"
 artifacts:
 - "Jellyfin.Plugin.Community.dll"
 - "Markdig.dll"
 changelog: >
-  1.5 publica Foro en el menuLinks oficial de Jellyfin Web y abre una aplicación
-  independiente para usuarios normales, compatible con el WebView Android. Toma
-  automáticamente la sesión Jellyfin sin pedir IP, usa controles HTML nativos,
-  separa administración y ofrece errores HTTP con referencia de diagnóstico.
+  1.6.0.0 consolida Foro para usuarios normales, añade y valida el canal nativo
+  Foro, mantiene la experiencia Web/WebView, refuerza permisos y E2E, y permite
+  convivir con JellyPremiere sin que ambos plugins compitan por la integración
+  de Jellyfin Web. Validado sobre Jellyfin 10.10.7 / .NET 8.
