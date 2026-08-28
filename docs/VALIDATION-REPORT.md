@@ -1,33 +1,45 @@
-# Informe de validación reproducible
+# Informe de validación final — Community 1.6.0.0
 
-- Fecha UTC: `2026-08-07T19:08:51.657274Z`
-- Commit validado: `9f552fc7ab82388498bc077347bc5c4ebddfcd11`
-- Ejecución CI: https://github.com/odoslf/Jellyfin-Community/actions/runs/31210122703
-- Jellyfin objetivo: `10.10.7`
-- ABI de catálogo objetivo: `10.10.7.0`
-- Framework: `net8.0`
-- SDK de compilación: `8.0.423`
-- Plugin: `1.0.0.0`
+- Commit funcional validado: `178ece10ab0f5f7013c046301a0c46015476e226`
+- Ejecución CI final: `33120488855`
+- Resultado CI: **success**
+- Jellyfin objetivo: **10.10.7**
+- ABI de catálogo: **10.10.7.0**
+- Framework: **net8.0 / .NET 8**
+- Plugin: **1.6.0.0**
+- Release: `v1.6.0.0`
 
-## Resultado
+## Puertas superadas
 
-- Restauración de dependencias: **correcta**
-- Compilación Release: **correcta, advertencias tratadas como errores**
-- Analizadores estáticos de .NET: **correctos**
-- Pruebas: **20 superadas de 20**, 0 fallos, 0 errores, 0 canceladas
-- Cobertura de líneas: **21.58%**
-- Cobertura de ramas: **16.80%**
-- Auditoría de dependencias directas y transitivas: **sin paquetes vulnerables conocidos reportados por NuGet**
-- Integridad del ZIP: **correcta**
+La ejecución final completó correctamente:
 
-## Paquete instalable
+- validación de sintaxis y contrato Web;
+- restauración de dependencias;
+- compilación Release con análisis estático y warnings como errores;
+- pruebas .NET con cobertura;
+- auditoría de dependencias;
+- publicación y empaquetado;
+- arranque del ZIP final en la imagen oficial `jellyfin/jellyfin:10.10.7`;
+- E2E real de API con autenticación;
+- E2E real del canal nativo **Foro**;
+- verificación de menú, aplicación independiente Foro y recursos sin caché obsoleta;
+- E2E real de Jellyfin Web mediante Chromium móvil;
+- captura y revisión del log de runtime;
+- generación y subida de evidencias.
 
-- SHA-256: `56044556a6481130a888f5ef8d9f19d5ac7d16071787e94d7ced6afff9be2ad3`
-- Contenido permitido: `Jellyfin.Plugin.Community.dll, Markdig.dll`
-- Número de entradas: `2`
+## Paquete publicado
 
-El paquete no incorpora ensamblados `Jellyfin.*` del servidor, `MediaBrowser.*`, `Microsoft.*`, `System.*` ni un runtime `SQLitePCLRaw.*`; evita sustituir dependencias proporcionadas por Jellyfin 10.10.7.
+- Archivo: `Jellyfin.Plugin.Community_1.6.0.0.zip`
+- MD5 del catálogo: `14B601B1893D3DEB27FE5EEA1E1AD9A2`
+- SHA-256 del asset publicado: `35661989bc425b93c680d227b8846c23c185b1a1fc9a2f110c9b5d3c1dc078d1`
+- Contenido esperado del plugin: `Jellyfin.Plugin.Community.dll`, `Markdig.dll`
 
-## Alcance de la garantía
+El paquete no incorpora DLL del host Jellyfin ni un runtime .NET alternativo que pueda sustituir dependencias proporcionadas por Jellyfin 10.10.7.
 
-Este informe demuestra una compilación reproducible, análisis estático, pruebas automatizadas, auditoría de dependencias e integridad del paquete. No afirma una prueba física de instalación o rendimiento en un Synology concreto; esa comprobación requiere arrancar el artefacto en el servidor final y revisar sus registros.
+## Validación conjunta del catálogo ODOS3D
+
+Después de publicar Community 1.6.0.0, el repositorio unificado ODOS3D descargó los paquetes finales de Community, JellyPremiere y JellyLiveNow, verificó sus checksums, los instaló juntos en un Jellyfin 10.10.7 oficial y completó con éxito el E2E combinado y la revisión de logs antes de actualizar el catálogo público.
+
+## Alcance
+
+Este informe acredita el comportamiento automatizado validado del paquete final y su convivencia con los otros plugins del catálogo. No supone que un plugin de servidor pueda añadir páginas HTML nativas arbitrarias a clientes que no ejecuten Jellyfin Web. La presentación exacta en cada cliente físico sigue dependiendo de las capacidades del cliente oficial.
