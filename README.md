@@ -7,34 +7,34 @@
 
 **Community** añade un foro local a Jellyfin. Reutiliza las cuentas, sesiones y permisos del servidor y guarda sus datos en una base SQLite independiente. No crea usuarios paralelos, no almacena contraseñas y no incorpora telemetría.
 
-> **Línea estable 1.x:** Jellyfin Server **10.10.7**, ABI de catálogo **10.10.7.0**, **.NET 8 (`net8.0`)**. La versión de esta rama es **1.6.0.0**.
+> **Línea estable 1.x:** Jellyfin Server **10.10.7**, ABI de catálogo **10.10.7.0**, **.NET 8 (`net8.0`)**. La versión estable actual es **1.6.0.0**.
 
 ## Instalación desde Jellyfin
 
-En **Panel de control → Plugins → Repositorios → +** añada:
+En **Panel de control → Plugins → Repositorios → +** añade únicamente el repositorio unificado ODOS3D:
 
-- **Nombre:** `Jellyfin Community`
-- **URL:** `https://raw.githubusercontent.com/odoslf/Jellyfin-Community/main/manifest.json`
+- **Nombre:** `ODOS3D Jellyfin Plugins`
+- **URL:** `https://raw.githubusercontent.com/odoslf/Repositorio-plugin-Jelly-fin-odos3d.lab/main/manifest.json`
 
-Guarde el repositorio, abra **Plugins → Catálogo**, seleccione **Community**, instálelo y reinicie Jellyfin cuando se le solicite. Después de actualizar el plugin, cierre y vuelva a abrir una vez la aplicación Jellyfin o recargue completamente Jellyfin Web para que el cliente cargue el nuevo `index.html` y el bootstrap de Community.
+Guarda el repositorio, abre **Plugins → Catálogo**, selecciona **Community**, instálalo y reinicia Jellyfin cuando se solicite. Tras actualizar el plugin, cierra y vuelve a abrir una vez la aplicación Jellyfin o recarga completamente Jellyfin Web para que el cliente cargue el documento web actualizado.
 
 ## Qué cambia en 1.6
 
-La interfaz se ha reconstruido para corregir el problema de diseño de las versiones anteriores: una página declarada mediante `IHasWebPages` es una página de configuración de Jellyfin y su enumeración requiere privilegios elevados; no es una sección fiable para usuarios normales.
+La interfaz separa correctamente la configuración administrativa de la experiencia de usuario. Una página declarada mediante `IHasWebPages` es una página de configuración de Jellyfin y no es una sección fiable para usuarios normales, por lo que Community 1.6 utiliza mecanismos distintos para cada función.
 
-Community 1.5 separa por completo ambos usos:
+- Jellyfin Web recibe una entrada **Foro** mediante `menuLinks`, visible en la navegación normal junto a las bibliotecas.
+- **Foro** abre `/Community/app`, una aplicación independiente apta para usuarios normales.
+- La app Android basada en WebView conserva la navegación dentro de la propia aplicación mediante el bootstrap de Community.
+- Los formularios usan controles HTML nativos y las categorías se renderizan con texto y valor explícitos.
+- La sesión se obtiene automáticamente de `jellyfin_credentials`; Community no pide, guarda ni compara IP, dominio o puerto.
+- Todas las rutas se calculan a partir del origen y la subruta actuales, incluido el uso detrás de proxy inverso o base URL como `/jellyfin`.
+- Administración y moderación aparecen solo para los roles correspondientes. Los ajustes del plugin permanecen en el panel de control.
+- Los errores muestran estado HTTP, código y referencia correlacionable con el registro de Jellyfin.
+- Un fallo de notificación posterior al guardado no convierte una creación correcta en un error ni provoca duplicados al reintentar.
+- El canal nativo **Foro** se publica mediante `IChannel` para clientes que exponen Channels de Jellyfin.
+- La integración Web convive con JellyPremiere sin que ambos compitan por modificar el arranque de Jellyfin Web.
 
-- Jellyfin Web recibe una entrada **Foro** mediante su opción oficial `menuLinks`, visible en la navegación normal junto a las bibliotecas.
-- **Foro** abre `/Community/app`, una aplicación independiente apta para usuarios normales. No carga el controlador heredado ni componentes personalizados `emby-select`.
-- La app Android conserva la navegación dentro de su WebView mediante un bootstrap pequeño que cambia el enlace oficial a `target=_self`.
-- Los formularios usan controles HTML nativos; las categorías se renderizan con texto y valor explícitos.
-- La sesión se obtiene automáticamente de `jellyfin_credentials`, igual que hace la app Android oficial. Community no pide, guarda ni compara una IP, dominio o puerto.
-- Todas las rutas se calculan a partir del origen y la subruta actuales. Funciona detrás de proxy inverso, tanto en `/` como en una base URL como `/jellyfin`.
-- Administración y moderación aparecen en pestañas separadas solo para los roles correspondientes. Los ajustes del plugin permanecen en el panel de control.
-- Los errores muestran estado HTTP, código y referencia correlacionable con el registro de Jellyfin; ya no se reducen al aviso `Error de Community`.
-- Un fallo de notificación posterior al guardado ya no convierte una creación correcta en un error ni provoca duplicados al reintentar.
-
-El menú se integra específicamente con **Jellyfin Web 10.10.7** y con la aplicación Android basada en su WebView. Otros clientes nativos que no cargan Jellyfin Web no admiten páginas de plugin arbitrarias y no se declaran compatibles con esta pantalla.
+La interfaz rica de Foro está validada en **Jellyfin Web 10.10.7** y en el flujo Android basado en WebView. Los clientes nativos que no ejecutan Jellyfin Web no admiten páginas HTML arbitrarias de plugins; en ellos solo puede aparecer la representación estándar que el cliente haga de los objetos nativos de Jellyfin, incluido el canal `Foro` cuando el cliente muestre Channels.
 
 ## Funciones
 
@@ -62,30 +62,29 @@ El menú se integra específicamente con **Jellyfin Web 10.10.7** y con la aplic
 | Plugin | **1.6.0.0** |
 | SDK de compilación CI | **8.0.423** |
 
-La línea 1.x permanece deliberadamente fijada a Jellyfin 10.10.7/.NET 8. El soporte para versiones posteriores de Jellyfin que usen otro runtime se publicará como una línea separada y no sustituirá silenciosamente este artefacto.
+La línea 1.x permanece fijada a Jellyfin 10.10.7/.NET 8. El soporte para versiones posteriores de Jellyfin que utilicen otro runtime se publicará como una línea separada y no sustituirá silenciosamente este artefacto.
 
 ## Validación de publicación
 
-Una compilación verde por sí sola no se considera suficiente. La publicación 1.5 queda bloqueada si falla cualquiera de estas etapas:
+Una compilación verde por sí sola no se considera suficiente. Community 1.6.0.0 se publica únicamente cuando pasan estas puertas:
 
-- sintaxis de los recursos web y política CSP sin JavaScript inline;
-- contrato frontend que prueba respuestas JSON PascalCase/camelCase, subrutas, sesión automática y controles HTML nativos;
+- sintaxis de recursos web y contrato frontend;
 - compilación Release con advertencias tratadas como errores y analizadores de .NET;
 - pruebas .NET con cobertura;
 - auditoría de dependencias directas y transitivas;
-- ZIP cerrado a `Jellyfin.Plugin.Community.dll` y `Markdig.dll`;
-- arranque del ZIP final dentro de la imagen oficial `jellyfin/jellyfin:10.10.7`;
-- E2E autenticado de API con administrador y usuario normal;
-- petición directa a `config.json` que exige una única entrada oficial **Foro** y petición a `index.html` que exige el bootstrap Android 1.5;
-- comprobación de `/Community/app` y sus recursos aislados de versiones anteriores;
-- E2E de Jellyfin Web real en Chromium móvil: inicio de sesión, entrada **Foro**, misma WebView, categorías nativas, creación de un tema, permisos y administración separada;
-- prueba de actualización que conserva temas y mensajes de una base existente de 1.4;
-- comprobación del registro de runtime para errores emitidos por Community;
-- informe de validación generado a partir de las evidencias de esa misma ejecución.
+- ZIP limitado a `Jellyfin.Plugin.Community.dll` y `Markdig.dll`;
+- arranque del ZIP final en `jellyfin/jellyfin:10.10.7`;
+- E2E autenticado con administrador y usuario normal;
+- prueba del canal nativo **Foro**;
+- comprobación real de `config.json`, `index.html`, `/Community/app` y recursos sin caché obsoleta;
+- E2E de Jellyfin Web real en Chromium móvil;
+- conservación de datos en la prueba de actualización;
+- revisión del registro de runtime para errores emitidos por Community;
+- generación de evidencias y del informe de validación de esa ejecución.
 
-Estas pruebas reducen el riesgo y reproducen los fallos concretos comunicados en las versiones anteriores; no equivalen a prometer que un software pueda estar libre de cualquier fallo en todas las configuraciones externas.
+El run final de publicación de 1.6.0.0 superó todas esas etapas en Jellyfin 10.10.7 antes de crear la release.
 
-Consulte [VALIDATION.md](docs/VALIDATION.md), [ARCHITECTURE.md](docs/ARCHITECTURE.md) y el informe adjunto a cada Release.
+Consulta [VALIDATION.md](docs/VALIDATION.md), [ARCHITECTURE.md](docs/ARCHITECTURE.md) y [VALIDATION-REPORT.md](docs/VALIDATION-REPORT.md).
 
 ## Compilar en Windows 10
 
@@ -97,10 +96,10 @@ cd Jellyfin-Community
 .\scripts\build.ps1
 ```
 
-El paquete de esta versión se genera en:
+El paquete estable se publica como:
 
 ```text
-artifacts/Jellyfin.Plugin.Community_1.6.0.0.zip
+Jellyfin.Plugin.Community_1.6.0.0.zip
 ```
 
 ## Estructura
@@ -116,8 +115,8 @@ manifest.json   catálogo consumido por Jellyfin
 
 ## Desarrollo y seguridad
 
-Antes de contribuir, consulte [CONTRIBUTING.md](CONTRIBUTING.md). Los problemas de seguridad deben seguir [SECURITY.md](SECURITY.md). No publique un ZIP generado desde una ejecución que no haya superado las puertas de validación de la versión objetivo.
+Antes de contribuir, consulta [CONTRIBUTING.md](CONTRIBUTING.md). Los problemas de seguridad deben seguir [SECURITY.md](SECURITY.md). No publiques un ZIP generado desde una ejecución que no haya superado las puertas de validación de la versión objetivo.
 
 ## Licencia
 
-Este proyecto se distribuye bajo **GNU GPL v3**. Consulte [LICENSE](LICENSE).
+Este proyecto se distribuye bajo **GNU GPL v3**. Consulta [LICENSE](LICENSE).
