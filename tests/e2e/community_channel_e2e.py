@@ -8,7 +8,7 @@ import urllib.parse
 import urllib.request
 
 BASE = os.environ.get("JELLYFIN_URL", "http://127.0.0.1:8096").rstrip("/")
-CLIENT_HEADER = 'MediaBrowser Client="Community%20Channel%20CI", DeviceId="community-channel-ci", Device="GitHub%20Actions", Version="1.6.0.0"'
+CLIENT_HEADER = 'MediaBrowser Client="Community%20Channel%20CI", DeviceId="community-channel-ci", Device="GitHub%20Actions", Version="2.0.0.0"'
 USERS = (
     ("community-admin", "community-admin-password"),
     ("community-user", "community-user-password"),

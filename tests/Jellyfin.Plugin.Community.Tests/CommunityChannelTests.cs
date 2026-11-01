@@ -12,7 +12,7 @@ public sealed class CommunityChannelTests
         var result = await channel.GetChannelItems(new InternalChannelItemQuery(), CancellationToken.None);
 
         Assert.Equal("Foro", channel.Name);
-        Assert.Equal("../Community/app?v=1.6.0.0", channel.HomePageUrl);
+        Assert.Equal("../Community/app?v=2.0.0.0", channel.HomePageUrl);
         Assert.True(channel.IsEnabledFor("test-user"));
         Assert.Single(result.Items);
         Assert.Equal("community_forum_access", result.Items[0].Id);

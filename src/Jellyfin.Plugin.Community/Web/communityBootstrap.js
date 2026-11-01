@@ -1,7 +1,7 @@
 (() => {
     'use strict';
 
-    const VERSION = '1.6.0.0';
+    const VERSION = '2.0.0.0';
     const MARKER = 'data-jellyfin-community-menu';
     const PREMIERE_MARKER = 'data-jellypremiere-client';
     const currentScript = document.currentScript;

@@ -7,13 +7,13 @@ namespace Jellyfin.Plugin.Community;
 
 public sealed class CommunityChannel : IChannel
 {
-    private const string ForumUrl = "../Community/app?v=1.6.0.0";
+    private const string ForumUrl = "../Community/app?v=2.0.0.0";
 
     public string Name => "Foro";
 
     public string Description => "Foro comunitario local para debatir y conversar.";
 
-    public string DataVersion => typeof(Plugin).Assembly.GetName().Version?.ToString() ?? "1.6.0.0";
+    public string DataVersion => typeof(Plugin).Assembly.GetName().Version?.ToString() ?? "2.0.0.0";
 
     public string HomePageUrl => ForumUrl;
 

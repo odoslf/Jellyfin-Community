@@ -28,7 +28,10 @@ public sealed class CommunityStartupService : IHostedService
         _paths.EnsureCreated();
         await ApplyPendingRestoreAsync(cancellationToken).ConfigureAwait(false);
         await _database.InitializeAsync(cancellationToken).ConfigureAwait(false);
-        _logger.LogInformation("Jellyfin Community initialized at {DatabasePath}", _paths.DatabasePath);
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation("Jellyfin Community initialized at {DatabasePath}", _paths.DatabasePath);
+        }
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

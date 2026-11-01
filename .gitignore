@@ -12,3 +12,11 @@ TestResults/
 *.log
 .DS_Store
 Thumbs.db
+
+node_modules/
+e2e-runtime/
+artifacts/
+package-lock.json
+__pycache__/
+*.pyc
+*.patch

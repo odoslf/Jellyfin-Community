@@ -22,7 +22,7 @@ function attachDiagnostics(page, label) {
 }
 
 async function login(page, credentials) {
-    await page.goto(`${base}/web/index.html#!/login.html`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${base}/web/index.html#/login`, { waitUntil: 'domcontentloaded' });
     await page.locator('#loginPage').waitFor({ state: 'visible', timeout: 30_000 });
     await page.waitForFunction(() => {
         const manual = document.querySelector('.manualLoginForm');
@@ -30,25 +30,29 @@ async function login(page, credentials) {
         return (manual && !manual.classList.contains('hide')) || (button && !button.classList.contains('hide'));
     }, null, { timeout: 30_000 });
 
-    if (!(await page.locator('.manualLoginForm').isVisible())) await page.locator('.btnManual').click();
+    const manualBtn = page.locator('.btnManual');
+    if (await manualBtn.evaluate(el => !el.classList.contains('hide') && el.offsetParent !== null)) {
+        await manualBtn.click();
+    }
     await page.locator('#txtManualName').fill(credentials.name);
     await page.locator('#txtManualPassword').fill(credentials.password);
     await page.locator('.manualLoginForm button[type="submit"]').click();
     await page.waitForFunction(() => typeof window.ApiClient?.accessToken === 'function' && Boolean(window.ApiClient.accessToken()), null, { timeout: 30_000 });
-    await page.waitForFunction(() => Boolean(window.JellyfinCommunityBootstrap?.VERSION === '1.6.0.0'), null, { timeout: 30_000 });
-    // Authentication completes before Jellyfin's own post-login navigation has
-    // necessarily settled.  Waiting for the normal shell prevents that pending
-    // navigation from racing (and replacing) a subsequent plugin route.
-    await page.locator('.mainDrawerButton:not(.hide)').first().waitFor({ state: 'visible', timeout: 30_000 });
+    await page.waitForFunction(() => Boolean(window.JellyfinCommunityBootstrap?.VERSION === '2.0.0.0'), null, { timeout: 30_000 });
+    await page.waitForURL(url => !url.href.includes('/login'), { timeout: 30_000 });
 }
 
 async function openForumFromNormalMenu(page) {
-    const drawerButton = page.locator('.mainDrawerButton:not(.hide)').first();
-    await drawerButton.waitFor({ state: 'visible', timeout: 30_000 });
-    await drawerButton.click();
-    await page.locator('.mainDrawer.drawer-open').waitFor({ state: 'attached', timeout: 30_000 });
+    // If the sidebar is already open or persistent (e.g. desktop), check for visible Foro link directly
+    let forumLink = page.locator('a[href*="/Community/app"]:visible, a[data-jellyfin-community-menu]:visible').filter({ hasText: 'Foro' }).first();
+    if (await forumLink.count() === 0 || !(await forumLink.isVisible())) {
+        const drawerButton = page.locator('button[aria-label="Open Menu"]:visible, .mainDrawerButton:not(.hide):visible').first();
+        await drawerButton.waitFor({ state: 'visible', timeout: 30_000 });
+        await drawerButton.click();
+        await page.locator('.MuiDrawer-root, .mainDrawer.drawer-open').first().waitFor({ state: 'visible', timeout: 30_000 });
+        forumLink = page.locator('a[href*="/Community/app"]:visible, a[data-jellyfin-community-menu]:visible').filter({ hasText: 'Foro' }).first();
+    }
 
-    const forumLink = page.locator('a[data-jellyfin-community-menu]').filter({ hasText: 'Foro' }).first();
     await forumLink.waitFor({ state: 'visible', timeout: 30_000 });
     const link = await forumLink.evaluate(anchor => ({ href: anchor.href, target: anchor.target }));
     if (!/\/Community\/app(?:\?|$)/i.test(link.href)) throw new Error(`Unexpected Forum URL: ${link.href}`);
@@ -56,7 +60,7 @@ async function openForumFromNormalMenu(page) {
     await forumLink.click();
 
     await page.waitForURL(url => /\/Community\/app(?:\?|$)/i.test(url.pathname + url.search), { timeout: 30_000 });
-    await page.waitForFunction(() => Boolean(window.JellyfinCommunityForum15?.VERSION === '1.6.0.0'), null, { timeout: 30_000 });
+    await page.waitForFunction(() => Boolean(window.JellyfinCommunityForum15?.VERSION === '2.0.0.0'), null, { timeout: 30_000 });
     await page.locator('#forumContent .forum-grid').waitFor({ state: 'visible', timeout: 30_000 });
     const error = page.locator('#forumBanner.error');
     if (await error.isVisible()) throw new Error(`Forum initialization error: ${await error.innerText()}`);
@@ -96,11 +100,11 @@ async function runOrdinaryUser(browser) {
         if (await page.locator('#moderationTab').isVisible()) throw new Error('Ordinary users must not see Forum moderation.');
 
         const form = await assertNativeCategorySelector(page);
-        await form.locator('#newTitle').fill('Community browser E2E thread 1.5');
+        await form.locator('#newTitle').fill('Community browser E2E thread 2.0');
         await form.locator('#newBody').fill('Tema creado por un usuario normal desde el menú Foro de Jellyfin.');
         await page.waitForTimeout(11_000);
         await form.locator('button[type="submit"]').click();
-        await page.locator('h2').filter({ hasText: 'Community browser E2E thread 1.5' }).waitFor({ state: 'visible', timeout: 30_000 });
+        await page.locator('h2').filter({ hasText: 'Community browser E2E thread 2.0' }).waitFor({ state: 'visible', timeout: 30_000 });
         await page.locator('#replyForm').waitFor({ state: 'visible', timeout: 10_000 });
         await assertNoOverflow(page);
         await page.screenshot({ path: 'artifacts/e2e-user-mobile.png', fullPage: true });
@@ -139,7 +143,13 @@ async function runAdministratorSettings(browser) {
         const page = await context.newPage();
         const assertNoErrors = attachDiagnostics(page, 'administrator-settings');
         await login(page, admin);
-        await page.evaluate(() => window.Dashboard.navigate(window.Dashboard.getPluginUrl('CommunityConfiguration')));
+        await page.evaluate(() => {
+            if (window.Dashboard?.navigate) {
+                window.Dashboard.navigate(window.Dashboard.getPluginUrl('CommunityConfiguration'));
+            } else {
+                location.hash = '#/configurationpage?name=CommunityConfiguration';
+            }
+        });
         await page.waitForURL(url => url.href.includes('name=CommunityConfiguration'), { timeout: 30_000 });
         await page.locator('#CommunityConfigurationForm').waitFor({ state: 'visible', timeout: 30_000 });
         await page.getByText('Activar Community', { exact: true }).waitFor({ state: 'visible', timeout: 10_000 });
