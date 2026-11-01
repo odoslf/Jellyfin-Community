@@ -81,9 +81,9 @@ jobs:
           docker run -d --name jellyfin-community-12-4-e2e -p 8096:8096 \
             -v "$PWD/e2e-runtime/config:/config" -v "$PWD/e2e-runtime/cache:/cache" \
             jellyfin/jellyfin:12.4
-          for i in $(seq 1 60); do
-            if curl -s "http://127.0.0.1:8096/System/Info/Public" | grep -q "ServerName"; then
-              echo "Jellyfin 12.4 is healthy"
+          for i in $(seq 1 90); do
+            if curl -fs "http://127.0.0.1:8096/Startup/User" >/dev/null 2>&1; then
+              echo "Jellyfin 12.4 Startup API is ready"
               break
             fi
             sleep 2
