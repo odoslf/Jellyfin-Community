@@ -61,7 +61,10 @@ def wait_for_server():
         try:
             status, payload, _ = call("GET", "/System/Info/Public", expected=(200,), raw=True)
             if status == 200 and payload:
-                return
+                # In Jellyfin 12, /Startup endpoints may return 503 for a few seconds while subsystems initialize
+                startup_status, _, _ = call("GET", "/Startup/User", expected=(200,), raw=True)
+                if startup_status == 200:
+                    return
         except Exception as exc:  # noqa: BLE001 - diagnostics for CI startup
             last_error = exc
         time.sleep(2)

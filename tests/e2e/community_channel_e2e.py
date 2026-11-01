@@ -85,7 +85,20 @@ def validate_user(username: str, password: str) -> dict:
     }
 
 
+def wait_for_ready():
+    deadline = time.time() + 60
+    while time.time() < deadline:
+        try:
+            req = urllib.request.Request(BASE + "/System/Info/Public")
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                if resp.status == 200:
+                    return
+        except Exception:
+            pass
+        time.sleep(2)
+
 def main() -> None:
+    wait_for_ready()
     evidence = [validate_user(username, password) for username, password in USERS]
     print(json.dumps({"status": "passed", "users": evidence}, ensure_ascii=False))
 
