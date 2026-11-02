@@ -5,12 +5,18 @@ on:
       - 'migration/**'
       - 'jellyfin-12*'
   pull_request:
+    branches:
+      - 'migration/**'
+      - 'jellyfin-12*'
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
   group: community-12-4-${{ github.ref }}
   cancel-in-progress: true
+defaults:
+  run:
+    shell: bash
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -28,22 +34,26 @@ jobs:
           node-version: '22'
       - name: Validate frontend syntax
         run: |
+          set -euo pipefail
           node --check src/Jellyfin.Plugin.Community/Web/communityBootstrap.js
           node --check src/Jellyfin.Plugin.Community/Web/communityForum15.js
           node tests/e2e/community_json_contract.mjs
           python -m py_compile tests/e2e/community_api_e2e.py tests/e2e/community_channel_e2e.py
       - name: Restore / build / unit tests
         run: |
+          set -euo pipefail
           dotnet restore Jellyfin.Plugin.Community.sln --force-evaluate
           dotnet build Jellyfin.Plugin.Community.sln -c Release --no-restore --warnaserror
           dotnet test Jellyfin.Plugin.Community.sln -c Release --no-build --logger 'trx;LogFileName=community-12_4.trx'
       - name: Dependency vulnerability audit
         run: |
+          set -euo pipefail
           dotnet list Jellyfin.Plugin.Community.sln package --vulnerable --include-transitive > vulnerability-audit.txt
           cat vulnerability-audit.txt
           if grep -Eiq 'has the following vulnerable packages' vulnerability-audit.txt; then exit 1; fi
       - name: Package candidate (NOT PUBLISHED)
         run: |
+          set -euo pipefail
           mkdir -p artifacts/publish
           dotnet publish src/Jellyfin.Plugin.Community/Jellyfin.Plugin.Community.csproj -c Release --no-restore -o artifacts/publish
           python scripts/package.py --publish artifacts/publish --output artifacts/Jellyfin.Plugin.Community_2.0.0.0.zip
@@ -74,6 +84,7 @@ jobs:
           path: artifacts
       - name: Start official Jellyfin 12.4 with Community
         run: |
+          set -euo pipefail
           mkdir -p e2e-runtime/config/plugins/Community_2.0.0.0 e2e-runtime/cache
           unzip -q artifacts/Jellyfin.Plugin.Community_2.0.0.0.zip -d e2e-runtime/config/plugins/Community_2.0.0.0
           chmod -R a+rwX e2e-runtime
@@ -89,23 +100,36 @@ jobs:
             sleep 2
           done
       - name: Authenticated API E2E (admin, user, posts, moderation)
-        run: python3 tests/e2e/community_api_e2e.py | tee artifacts/community-12_4-api.json
+        run: |
+          set -euo pipefail
+          python3 tests/e2e/community_api_e2e.py > artifacts/community-12_4-api.json
+          cat artifacts/community-12_4-api.json
+          jq -e '.status == "passed"' artifacts/community-12_4-api.json
       - name: Native forum channel E2E
-        run: python3 tests/e2e/community_channel_e2e.py | tee artifacts/community-12_4-channel.json
+        run: |
+          set -euo pipefail
+          python3 tests/e2e/community_channel_e2e.py > artifacts/community-12_4-channel.json
+          cat artifacts/community-12_4-channel.json
+          jq -e '.status == "passed"' artifacts/community-12_4-channel.json
       - name: Modern/legacy web menu and bootstrap
         run: |
+          set -euo pipefail
           curl -fsS "$JELLYFIN_URL/web/config.json" -o artifacts/web-config.json
           jq -e '.menuLinks | any(.name == "Foro")' artifacts/web-config.json
           curl -fsS "$JELLYFIN_URL/Community/app" -o artifacts/community-app.html
           grep -q 'communityForum15.js' artifacts/community-app.html
       - name: Playwright real browser validation
         run: |
+          set -euo pipefail
           npm install --no-save --no-package-lock playwright@1.55.0
           npx playwright install --with-deps chromium
-          node tests/e2e/community_browser_e2e.mjs | tee artifacts/community-12_4-browser.txt
+          node tests/e2e/community_browser_e2e.mjs > artifacts/community-12_4-browser.txt
+          cat artifacts/community-12_4-browser.txt
+          jq -e '.status == "passed"' artifacts/community-12_4-browser.txt
       - name: Inspect runtime logs
         if: always()
         run: |
+          set -euo pipefail
           docker logs jellyfin-community-12-4-e2e > artifacts/jellyfin-runtime.log 2>&1 || true
           if grep -E '\[ERR\].*Jellyfin\.Plugin\.Community|Jellyfin\.Plugin\.Community.*\[ERR\]' artifacts/jellyfin-runtime.log; then exit 1; fi
       - name: Attach E2E diagnostics

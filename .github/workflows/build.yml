@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   validate:
-    if: (!startsWith(github.head_ref, 'migration/') && !startsWith(github.head_ref, 'jellyfin-12')) && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release') || (github.event_name == 'pull_request' && (github.base_ref == 'main' || startsWith(github.base_ref, 'release'))))
+    if: (!startsWith(github.event.pull_request.head.ref, 'migration/') && !startsWith(github.event.pull_request.head.ref, 'jellyfin-12') && !startsWith(github.ref, 'refs/heads/migration/') && !startsWith(github.ref, 'refs/heads/jellyfin-12')) && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release') || (github.event_name == 'pull_request' && (github.base_ref == 'main' || startsWith(github.base_ref, 'release'))))
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:

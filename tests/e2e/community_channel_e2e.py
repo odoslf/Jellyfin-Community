@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -86,16 +87,18 @@ def validate_user(username: str, password: str) -> dict:
 
 
 def wait_for_ready():
-    deadline = time.time() + 60
+    deadline = time.time() + 120
+    last_error = None
     while time.time() < deadline:
         try:
             req = urllib.request.Request(BASE + "/System/Info/Public")
             with urllib.request.urlopen(req, timeout=5) as resp:
                 if resp.status == 200:
                     return
-        except Exception:
-            pass
+        except Exception as exc:
+            last_error = exc
         time.sleep(2)
+    raise RuntimeError(f"Jellyfin did not become ready for channel E2E tests within 120s: {last_error}")
 
 def main() -> None:
     wait_for_ready()
