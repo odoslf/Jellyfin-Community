@@ -293,7 +293,7 @@ public sealed record SearchQuery(
 public sealed record ModerationQuery(ReportState? State, int Page, int PageSize);
 
 public sealed record CommunityUserContext(
-    Jellyfin.Data.Entities.User User,
+    Jellyfin.Database.Implementations.Entities.User User,
     bool IsAdministrator,
     bool IsModerator,
     bool IsMuted,

@@ -1,4 +1,5 @@
-using Jellyfin.Data.Enums;
+using Jellyfin.Data;
+using Jellyfin.Database.Implementations.Enums;
 using Jellyfin.Plugin.Community.Domain;
 using Jellyfin.Plugin.Community.Infrastructure;
 using MediaBrowser.Controller.Net;

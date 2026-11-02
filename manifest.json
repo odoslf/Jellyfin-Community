@@ -8,12 +8,12 @@
     "category": "General",
     "versions": [
       {
-        "version": "1.6.0.0",
-        "changelog": "Versión final validada en Jellyfin 10.10.7: foro Web, usuarios normales, permisos, moderación y canal nativo Foro.",
-        "targetAbi": "10.10.7.0",
-        "sourceUrl": "https://github.com/odoslf/Jellyfin-Community/releases/download/v1.6.0.0/Jellyfin.Plugin.Community_1.6.0.0.zip",
-        "checksum": "FF6E15487FB1F4285459E97E6406F93E",
-        "timestamp": "2026-11-01T20:32:15.891835Z",
+        "version": "2.0.0.0",
+        "changelog": "Candidata 2.0.0.0 para Jellyfin 12.4 y .NET 10: Foro Web, sesiones Jellyfin 12 sin autenticación heredada, permisos, moderación, canal nativo Foro y persistencia SQLite.",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/odoslf/Jellyfin-Community/releases/download/v2.0.0.0-rc.1/Jellyfin.Plugin.Community_2.0.0.0.zip",
+        "checksum": "6F89A62A4B2131F8DA2B32716B95E6C7",
+        "timestamp": "2026-11-02T10:00:00Z",
         "dependencies": []
       }
     ]

@@ -3,12 +3,13 @@ from __future__ import annotations
 
 import json
 import os
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
 
 BASE = os.environ.get("JELLYFIN_URL", "http://127.0.0.1:8096").rstrip("/")
-CLIENT_HEADER = 'MediaBrowser Client="Community%20Channel%20CI", DeviceId="community-channel-ci", Device="GitHub%20Actions", Version="1.6.0.0"'
+CLIENT_HEADER = 'MediaBrowser Client="Community%20Channel%20CI", DeviceId="community-channel-ci", Device="GitHub%20Actions", Version="2.0.0.0"'
 USERS = (
     ("community-admin", "community-admin-password"),
     ("community-user", "community-user-password"),
@@ -85,7 +86,22 @@ def validate_user(username: str, password: str) -> dict:
     }
 
 
+def wait_for_ready():
+    deadline = time.time() + 120
+    last_error = None
+    while time.time() < deadline:
+        try:
+            req = urllib.request.Request(BASE + "/System/Info/Public")
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                if resp.status == 200:
+                    return
+        except Exception as exc:
+            last_error = exc
+        time.sleep(2)
+    raise RuntimeError(f"Jellyfin did not become ready for channel E2E tests within 120s: {last_error}")
+
 def main() -> None:
+    wait_for_ready()
     evidence = [validate_user(username, password) for username, password in USERS]
     print(json.dumps({"status": "passed", "users": evidence}, ensure_ascii=False))
 

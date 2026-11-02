@@ -1,0 +1,17 @@
+SUBIR AL GITHUB (MÉTODO SIN INSTALAR .NET EN TU ORDENADOR)
+
+1. En odoslf/Jellyfin-Community crea una rama llamada migration/jellyfin-12.4, basada en main.
+2. Sube a esa rama los ARCHIVOS de esta carpeta, manteniendo exactamente las rutas:
+   .github/workflows/community-12_4-validate.yml
+   migration/odos3d_12_4/migrate_community_12_4.py
+   migration/odos3d_12_4/workflow/community-12_4-validate.yml
+   migration/odos3d_12_4/docs/COMMUNITY_12_4_MIGRATION.md
+3. En la pestaña Actions de GitHub, abre 'Community 12.4 - build and E2E (NO RELEASE)'.
+   Ese workflow aplica el migrador temporalmente y ejecuta el compilador .NET 10.
+4. NO SUBAS EL ZIP COMO ÚNICO ARCHIVO; GitHub no lo descomprime automáticamente.
+5. Si pasa, Actions muestra el paquete candidato ZIP y el parche source 'migration_12_4.patch'.
+   Para dejar el código actualizado PERMANENTEMENTE en la rama, aplica ese parche
+   sobre la rama de trabajo y realiza commit.
+6. Si no pasa, usa el error de Actions para corregir. NO publiques release 2.0.
+
+IMPORTANTE: esta compilación aún no se ha ejecutado; el workflow la intentará.

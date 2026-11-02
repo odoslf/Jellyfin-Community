@@ -1,7 +1,7 @@
 (() => {
     'use strict';
 
-    const VERSION = '1.6.0.0';
+    const VERSION = '2.0.0.0';
     const pathIndex = location.pathname.toLowerCase().lastIndexOf('/community/app');
     const serverPath = pathIndex >= 0 ? location.pathname.slice(0, pathIndex).replace(/\/$/, '') : '';
     const serverRoot = `${location.origin}${serverPath}`;
@@ -142,8 +142,7 @@
 
         const headers = {
             Accept: 'application/json',
-            'X-Emby-Token': state.auth.token,
-            'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Community", Device="Web", DeviceId="community-forum", Version="${VERSION}", Token="${state.auth.token}"`,
+            'Authorization': `MediaBrowser Client="Jellyfin Community", Device="Web", DeviceId="community-forum", Version="${VERSION}", Token="${state.auth.token}"`,
             ...(options.headers || {})
         };
         let body;
@@ -733,7 +732,7 @@
         try {
             const response = await fetch(apiRoot + 'admin/backups', {
                 method: 'POST',
-                headers: { 'X-Emby-Token': state.auth.token },
+                headers: { Authorization: `MediaBrowser Client="Odos3D Community", Device="Web", DeviceId="community-forum", Version="${VERSION}", Token="${state.auth.token}"` },
                 credentials: 'same-origin',
                 cache: 'no-store'
             });

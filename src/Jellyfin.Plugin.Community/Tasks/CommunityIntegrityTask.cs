@@ -40,5 +40,5 @@ public sealed class CommunityIntegrityTask : IScheduledTask
     }
 
     public IEnumerable<TaskTriggerInfo> GetDefaultTriggers()
-        => [new TaskTriggerInfo { Type = TaskTriggerInfo.TriggerInterval, IntervalTicks = TimeSpan.FromDays(7).Ticks }];
+        => [new TaskTriggerInfo { Type = TaskTriggerInfoType.IntervalTrigger, IntervalTicks = TimeSpan.FromDays(7).Ticks }];
 }
