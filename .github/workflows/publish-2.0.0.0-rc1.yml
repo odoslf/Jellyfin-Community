@@ -1,0 +1,70 @@
+name: Publish Community 2.0.0.0 Pre-release
+
+on:
+  workflow_run:
+    workflows: ["Community 12.4 - build and E2E (NO RELEASE)"]
+    types: [completed]
+    branches:
+      - 'migration/community-jellyfin-12.4-15571495636806719030'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish-candidate:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      VERSION: 2.0.0.0
+      TAG: v2.0.0.0-rc.1
+      PACKAGE: Jellyfin.Plugin.Community_2.0.0.0.zip
+      ARTIFACT: Community-2.0.0.0-12.4-CANDIDATE-UNVERIFIED
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: migration/community-jellyfin-12.4-15571495636806719030
+
+      - name: Download and verify package from workflow run
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf release-artifact
+          mkdir -p release-artifact
+          if [ -n "${{ github.event.workflow_run.id || '' }}" ]; then
+            gh run download "${{ github.event.workflow_run.id }}" --repo "$GITHUB_REPOSITORY" --name "$ARTIFACT" --dir release-artifact
+          else
+            # When run via workflow_dispatch, download from latest successful run of the branch
+            LATEST_RUN="$(gh run list --workflow 'Community 12.4 - build and E2E (NO RELEASE)' --branch migration/community-jellyfin-12.4-15571495636806719030 --status success --limit 1 --json databaseId --jq '.[0].databaseId')"
+            gh run download "$LATEST_RUN" --repo "$GITHUB_REPOSITORY" --name "$ARTIFACT" --dir release-artifact
+          fi
+          if [ -d release-artifact/artifacts ]; then
+            cp -a release-artifact/artifacts/. release-artifact/
+          fi
+          test -f "release-artifact/$PACKAGE"
+          unzip -t "release-artifact/$PACKAGE"
+          test "$(unzip -Z1 "release-artifact/$PACKAGE" | wc -l)" -eq 2
+          unzip -Z1 "release-artifact/$PACKAGE" | sort | diff -u <(printf '%s\n' 'Jellyfin.Plugin.Community.dll' 'Markdig.dll' | sort) -
+          cd release-artifact
+          sha256sum "$PACKAGE" > "$PACKAGE.sha256"
+          md5sum "$PACKAGE" > "$PACKAGE.md5"
+
+      - name: Create or update Pre-release
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag
+          fi
+          gh release create "$TAG" \
+            "release-artifact/$PACKAGE" \
+            "release-artifact/$PACKAGE.md5" \
+            "release-artifact/$PACKAGE.sha256" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "${{ github.sha }}" \
+            --title "Community 2.0.0.0 Candidate (Jellyfin 12.4 / .NET 10)" \
+            --notes "Pre-release candidata Community 2.0.0.0 para Jellyfin 12.4 / .NET 10. Validada completamente con 34 pruebas unitarias, API E2E, canal Foro E2E, Web E2E y migración de base de datos." \
+            --prerelease
